@@ -496,6 +496,196 @@ Six modes, but NOT six different apps. The chrome around the canvas changes. The
 | **Offline-first** | Works on the bus, at practice, in the film room. |
 | **Dark by default** | Built for late nights in the film room. |
 
+## Shared Component Architecture — Build Once, Use Everywhere
+
+The entire app is built from a small set of reusable primitives. Every mode composes from the same pieces.
+
+### Core Primitives (build these FIRST — everything else is free)
+
+```
+<FieldCanvas />
+│  The football field. Renders yard lines, hashes, numbers.
+│  Used in: EVERY mode. Literally everywhere.
+│
+├── <PlayerIcon />
+│    A single player on the field. Draggable. Labeled (X, Z, T, etc).
+│    Props: position, label, team (offense/defense), selected, onDrag
+│    Used in: play designer, formation builder, scout cards, call sheet preview
+│
+├── <RouteLine />
+│    A single route or blocking assignment drawn on the field.
+│    Props: path (SVG data), type (route/block/motion), style (solid/dashed/wavy)
+│    Used in: play designer, playbook thumbnails, scout cards, player share view
+│
+├── <FormationOverlay />
+│    Places 11 players in a formation. Just maps a formation template → PlayerIcons.
+│    Props: formation (from library), side (offense/defense)
+│    Used in: play designer, formation picker thumbnails, concept assembly
+│
+└── <DefenseOverlay />
+     Places defensive players in a front/coverage shell.
+     Props: defense (from library), coverage
+     Used in: play designer, game plan defense toggle, scout cards
+```
+
+### Play Renderer — The Single Most Important Component
+
+```
+<PlayRenderer />
+│  Composes FieldCanvas + FormationOverlay + RouteLines + DefenseOverlay
+│  Given a Play object, it renders the FULL diagram.
+│
+│  Props:
+│    play: Play           — the play data
+│    defense?: Defense    — optional defense overlay
+│    editable: boolean    — can the coach modify it? (true in designer, false in call sheet)
+│    size: 'full' | 'card' | 'thumbnail' | 'wristband'
+│    highlights?: string[]  — highlight specific positions (for player-filtered view)
+│    animated?: boolean   — play animation mode
+│
+│  THIS is the component that gets reused everywhere:
+│
+│  ┌─────────────────────────────────────────────────┐
+│  │ Play Designer    → <PlayRenderer editable size="full" />           │
+│  │ Playbook Grid    → <PlayRenderer size="thumbnail" />    (x40)     │
+│  │ Game Plan Slot   → <PlayRenderer defense={opp} size="card" />     │
+│  │ Scout Card       → <PlayRenderer defense={opp} size="card" />     │
+│  │ Call Sheet Cell   → <PlayRenderer size="wristband" />             │
+│  │ Wristband Cell   → <PlayRenderer size="wristband" />             │
+│  │ Player Share     → <PlayRenderer highlights={["X"]} size="full" />│
+│  │ Meeting Deck     → <PlayRenderer animated size="full" />          │
+│  │ Quick Sketch     → <PlayRenderer editable size="full" />          │
+│  └─────────────────────────────────────────────────┘
+│
+│  ONE component. Different props. Every view in the app.
+```
+
+### Layout Shells — Thin Wrappers, All the Reuse
+
+Each "mode" is just a layout that arranges PlayRenderers and library pickers:
+
+```
+<QuickSketchPage />
+│  Just a full-screen <PlayRenderer editable size="full" />
+│  + a floating save button. That's it. Maybe 30 lines of code.
+
+<PlaybookPage />
+│  Left: folder tree
+│  Right: grid of <PlayRenderer size="thumbnail" /> cards
+│  Click a card → opens <PlayRenderer editable size="full" />
+
+<GamePlanPage />
+│  Left sidebar: <PlaybookPage /> (reused!) as a filterable list
+│  Right: situation slots, each containing <PlayRenderer defense={opp} size="card" />
+│  Drag from left → right.
+
+<PracticeScriptPage />
+│  Left sidebar: <GamePlanPage /> slots (reused!) as a source
+│  Right: period list, each containing ordered <PlayRenderer size="card" />
+│  Drag from left → right.
+
+<GameDayPage />
+│  Tab 1 — Call Sheet: grid of <PlayRenderer size="wristband" /> in situation buckets
+│  Tab 2 — Wristband: smaller grid of <PlayRenderer size="wristband" />
+│  Both auto-populated from the GamePlan.
+
+<PlayerSharePage />
+│  Full-screen <PlayRenderer highlights={[position]} size="full" />
+│  Swipe to browse. Position filter toggle at top.
+```
+
+### Shared UI Components
+
+```
+<FormationPicker />    — grid of formation thumbnails. Used in play designer + concept assembly.
+<ConceptPicker />      — grid of concept cards. Used in play designer + game plan.
+<DefensePicker />      — grid of defensive fronts/coverages. Used in play designer + game plan.
+<TagEditor />          — chips for situation/personnel tags. Used in playbook + game plan.
+<ExportButton />       — PNG/PDF export. Used on any PlayRenderer.
+<ShareButton />        — QR code + link generation. Used on any play or collection.
+<PrintLayout />        — formats any collection of PlayRenderers for print (4-up, 6-up, call sheet, wristband).
+```
+
+### The Data Layer — One Schema, Every View
+
+```typescript
+// The core type — everything references this
+type Play = {
+  id: string
+  name: string
+  formation: FormationRef        // references the formation library
+  concept?: ConceptRef           // references the concept library
+  players: PlayerAssignment[]    // position + route/blocking overrides
+  tags: string[]                 // situation + personnel tags
+  notes?: string
+}
+
+// Game plan just references plays — never copies
+type GamePlan = {
+  id: string
+  opponent: string
+  week: number
+  sections: {
+    situation: string            // "Red Zone", "3rd & Long", etc.
+    plays: PlayRef[]             // references to Play IDs
+    defense?: DefenseRef         // opponent defense for this situation
+  }[]
+}
+
+// Practice script references game plan sections
+type PracticeScript = {
+  id: string
+  date: string
+  gamePlanId: string
+  periods: {
+    name: string                 // "Inside Run", "Team Pass", etc.
+    plays: PlayRef[]             // pulled from game plan
+  }[]
+}
+
+// Call sheet is auto-derived from game plan
+type CallSheet = {
+  gamePlanId: string             // that's it — the rest is rendering logic
+  wristbandPlays: PlayRef[]     // subset selected for wristband
+}
+```
+
+**Notice:** `GamePlan`, `PracticeScript`, and `CallSheet` barely have their own data. They're mostly just references + layout instructions. The play is ALWAYS the source of truth. This means:
+
+- Change a play → every view updates automatically
+- The "game plan builder" is really just a drag-and-drop organizer
+- The "call sheet" is just a print layout of the game plan
+- The "practice script" is just an ordered subset of the game plan
+- **Minimal new code per mode. Maximum reuse.**
+
+### Build Order — What to Build and When
+
+```
+Phase 1: The Canvas Core (MVP)
+  FieldCanvas → PlayerIcon → RouteLine → PlayRenderer (editable)
+  = Quick Sketch mode works. Coach can draw plays.
+
+Phase 2: Libraries
+  FormationPicker → ConceptPicker → DefensePicker
+  = Concept assembly works. 3-tap play creation.
+
+Phase 3: Organization
+  PlaybookPage (folders + thumbnails + tags)
+  = Playbook mode works. Coach can organize plays.
+
+Phase 4: Game Planning
+  GamePlanPage (situation slots + defense overlay + drag from playbook)
+  = War Room mode works. Weekly prep is possible.
+
+Phase 5: Output
+  PracticeScriptPage + CallSheet + Wristband + PrintLayout + ShareButton
+  = Practice, Game Day, and Share modes all work.
+  These are THIN layers — mostly layout and print formatting.
+  Phase 5 is fast because it's all reuse.
+```
+
+Phase 1 is the hard work. Phases 2-5 get progressively easier because every new mode just composes existing components in a new layout.
+
 ## Next Steps
 
 1. Scaffold the Next.js project
