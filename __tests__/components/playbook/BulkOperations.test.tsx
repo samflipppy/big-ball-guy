@@ -144,11 +144,14 @@ describe('BulkOperations', () => {
     render(<BulkOperations {...defaultProps} />);
 
     await user.click(screen.getByRole('button', { name: 'Move to Folder' }));
-    expect(screen.getByText('Move to Folder')).toBeInTheDocument();
+
+    // Dialog should be open
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toBeInTheDocument();
+    expect(within(dialog).getByText('Folder ID')).toBeInTheDocument();
 
     // Move button should be disabled without folder ID
-    const dialog = screen.getByRole('dialog');
-    const moveBtn = within(dialog).getByRole('button', { name: /Move 2 Plays/ });
+    const moveBtn = within(dialog).getByRole('button', { name: /Move 2 Play/ });
     expect(moveBtn).toBeDisabled();
   });
 

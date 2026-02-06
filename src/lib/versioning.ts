@@ -43,8 +43,16 @@ export function getVersionsDB(): Promise<IDBPDatabase> {
   return versionsDbPromise;
 }
 
-/** For testing: reset the cached DB promise */
-export function resetVersionsDB(): void {
+/** For testing: reset the cached DB promise and clear all stored versions */
+export async function resetVersionsDB(): Promise<void> {
+  if (versionsDbPromise) {
+    try {
+      const db = await versionsDbPromise;
+      await db.clear(VERSIONS_STORE);
+    } catch {
+      // DB may not exist yet, that's fine
+    }
+  }
   versionsDbPromise = null;
 }
 
@@ -72,9 +80,15 @@ export async function createVersion(play: Play, label?: string): Promise<PlayVer
 export async function getVersions(playId: PlayId): Promise<PlayVersion[]> {
   const db = await getVersionsDB();
   const all: PlayVersion[] = await db.getAllFromIndex(VERSIONS_STORE, 'playId', playId);
-  return all.sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-  );
+  // Filter by playId to ensure correctness (getAllFromIndex may return broader results)
+  return all
+    .filter((v) => v.playId === playId)
+    .sort((a, b) => {
+      const timeDiff = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      // Stable sort: use id as tiebreaker when timestamps are identical
+      if (timeDiff !== 0) return timeDiff;
+      return a.id < b.id ? 1 : a.id > b.id ? -1 : 0;
+    });
 }
 
 /**
