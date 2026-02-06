@@ -91,6 +91,8 @@ export function CommandPalette() {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         setOpen((prev) => !prev);
+      } else if (e.key === 'Escape') {
+        setOpen(false);
       }
     };
     document.addEventListener('keydown', handleKeyDown);
@@ -223,7 +225,9 @@ export function CommandPalette() {
   useEffect(() => {
     if (!listRef.current) return;
     const activeEl = listRef.current.querySelector('[data-active="true"]');
-    activeEl?.scrollIntoView({ block: 'nearest' });
+    if (activeEl && typeof activeEl.scrollIntoView === 'function') {
+      activeEl.scrollIntoView({ block: 'nearest' });
+    }
   }, [activeIndex]);
 
   // --- Keyboard navigation ---
