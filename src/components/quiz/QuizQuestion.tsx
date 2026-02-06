@@ -33,6 +33,7 @@ export default function QuizQuestion({
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [timeRemaining, setTimeRemaining] = useState(timeLimit ?? 0);
   const [answered, setAnswered] = useState(false);
+  const answeredRef = useRef(false);
   const startTimeRef = useRef(Date.now());
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -41,19 +42,21 @@ export default function QuizQuestion({
     setSelectedOption(null);
     setFeedback(null);
     setAnswered(false);
+    answeredRef.current = false;
     setTimeRemaining(timeLimit ?? 0);
     startTimeRef.current = Date.now();
   }, [question.id, timeLimit]);
 
   // Timer countdown
   useEffect(() => {
-    if (!timeLimit || timeLimit <= 0 || answered) return;
+    if (!timeLimit || timeLimit <= 0 || answeredRef.current) return;
 
     timerRef.current = setInterval(() => {
       setTimeRemaining((prev) => {
         if (prev <= 1) {
           // Time's up - auto-submit with no answer
-          if (!answered) {
+          if (!answeredRef.current) {
+            answeredRef.current = true;
             const timeSpent = (Date.now() - startTimeRef.current) / 1000;
             onAnswer(question.id, '', timeSpent);
             setAnswered(true);
@@ -69,12 +72,13 @@ export default function QuizQuestion({
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [question.id, timeLimit, answered, onAnswer]);
+  }, [question.id, timeLimit, onAnswer]);
 
   const handleOptionClick = useCallback(
     (option: string) => {
-      if (answered) return;
+      if (answeredRef.current) return;
 
+      answeredRef.current = true;
       const timeSpent = (Date.now() - startTimeRef.current) / 1000;
       setSelectedOption(option);
       setAnswered(true);
