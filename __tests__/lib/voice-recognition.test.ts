@@ -339,25 +339,27 @@ describe('isSpeechRecognitionAvailable', () => {
 
   it('returns true when SpeechRecognition is on window', () => {
     // Mock the API
-    const original = window.SpeechRecognition;
-    (window as any).SpeechRecognition = class {};
+    const w = window as unknown as Record<string, unknown>;
+    const original = w.SpeechRecognition;
+    w.SpeechRecognition = class {};
     expect(isSpeechRecognitionAvailable()).toBe(true);
     // Restore
     if (original) {
-      window.SpeechRecognition = original;
+      w.SpeechRecognition = original;
     } else {
-      delete (window as any).SpeechRecognition;
+      delete w.SpeechRecognition;
     }
   });
 
   it('returns true when webkitSpeechRecognition is on window', () => {
-    const original = window.webkitSpeechRecognition;
-    (window as any).webkitSpeechRecognition = class {};
+    const w = window as unknown as Record<string, unknown>;
+    const original = w.webkitSpeechRecognition;
+    w.webkitSpeechRecognition = class {};
     expect(isSpeechRecognitionAvailable()).toBe(true);
     if (original) {
-      window.webkitSpeechRecognition = original;
+      w.webkitSpeechRecognition = original;
     } else {
-      delete (window as any).webkitSpeechRecognition;
+      delete w.webkitSpeechRecognition;
     }
   });
 });
