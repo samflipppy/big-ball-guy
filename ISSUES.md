@@ -1770,7 +1770,9 @@ Allow coaches to define IF/THEN rules on plays that automatically show adjustmen
 | Audit: Output & Export | #280-294 | Batch PDF, call sheet templates, wristband editor, PowerPoint export, email playbooks |
 | Audit: Business & Competitive | #310-324 | Stripe integration, free tier, team invitations, analytics, referral, white-label |
 | Audit: Testing & DevOps | #340-354 | Playwright E2E, visual regression, CI/CD, Sentry, Web Vitals, load testing, feature flags |
-| **Total** | **102 issues** | |
+| Audit: Security | #65-79 | RLS policies, auth hardening, XSS sanitization, CSRF, rate limiting, GDPR/FERPA |
+| Audit: UX & Accessibility | #100-114 | Onboarding wizard, empty states, error boundaries, color-blind palette, keyboard nav |
+| **Total** | **132 issues** | |
 
 ---
 
@@ -3330,3 +3332,521 @@ Allow coaches to define IF/THEN rules on plays that automatically show adjustmen
 - [ ] Post-rollback checklist: verify app health, notify team, create incident report
 - [ ] Deploy metadata tracked: every production deploy logged with commit SHA, timestamp, deployer
 - [ ] Maximum rollback time target: under 5 minutes from decision to live rollback
+
+---
+
+# Security (#65-79)
+
+
+---
+
+## Issue #65: [EPIC] Security Hardening
+**Labels:** `epic`, `security`
+**Milestone:** Security Hardening
+**Priority:** Critical
+**Description:** Comprehensive security audit and hardening pass across the entire application. Covers multi-tenant data isolation, authentication strengthening, input sanitization, transport security, compliance, and offline data protection. All sub-issues must be resolved before public launch.
+**Acceptance Criteria:**
+- [ ] All sub-issues (#66-#79) completed and verified
+- [ ] Third-party penetration test passes with no critical or high findings
+- [ ] Security documentation published for the team
+
+---
+
+## Issue #66: Multi-tenant Row Level Security (RLS) policies
+**Labels:** `security`, `data`, `core`
+**Milestone:** Security Hardening
+**Priority:** Critical
+**Description:** Every Supabase table must enforce Row Level Security so that coaches can only read and write data belonging to their own team. Without RLS, any authenticated user could query or modify another team's playbooks, formations, game plans, and scouting data. This is the single most critical security control in the entire application.
+**Acceptance Criteria:**
+- [ ] RLS enabled on every table (teams, coaches, formations, routes, blocking_schemes, defensive_fronts, plays, playbooks, playbook_folders, playbook_plays, game_plans, game_plan_sections, game_plan_plays, practice_scripts, practice_periods, practice_period_plays, call_sheets, scratch_plays)
+- [ ] SELECT policies restrict rows to the authenticated user's team_id
+- [ ] INSERT policies enforce that new rows belong to the authenticated user's team_id
+- [ ] UPDATE and DELETE policies restrict modifications to the user's own team data
+- [ ] Coach role hierarchy enforced (head coach can manage team, assistant coaches cannot delete team)
+- [ ] RLS policies tested with automated tests simulating cross-tenant access attempts
+- [ ] Supabase service role key never exposed to the client — only anon key used in browser
+- [ ] Edge case: shared links bypass team RLS using a scoped read-only token (not the user's session)
+
+---
+
+## Issue #67: Rate limiting on authentication endpoints
+**Labels:** `security`, `infra`
+**Milestone:** Security Hardening
+**Priority:** Critical
+**Description:** Authentication endpoints (login, signup, magic link, password reset) must be rate-limited to prevent brute-force attacks and credential stuffing. Without rate limiting, an attacker could attempt thousands of password combinations or flood the magic link system to drain email sending quotas.
+**Acceptance Criteria:**
+- [ ] Login endpoint limited to 5 failed attempts per email per 15-minute window
+- [ ] Signup endpoint limited to 3 accounts per IP per hour
+- [ ] Magic link endpoint limited to 3 requests per email per 10-minute window
+- [ ] Password reset endpoint limited to 3 requests per email per hour
+- [ ] Rate limit responses return HTTP 429 with a Retry-After header
+- [ ] User-facing error message explains the lockout without revealing internal details
+- [ ] Rate limit state stored server-side (not client-enforceable only)
+- [ ] Logging of rate-limit triggers for security monitoring
+
+---
+
+## Issue #68: Multi-factor authentication (MFA)
+**Labels:** `security`, `feature`
+**Milestone:** Security Hardening
+**Priority:** High
+**Description:** Offer optional MFA via TOTP (authenticator app) for coaches who want additional account protection. MFA should be strongly recommended for head coaches and required for Enterprise-tier accounts where playbook data is highly sensitive.
+**Acceptance Criteria:**
+- [ ] MFA enrollment flow: coach scans QR code with authenticator app (Google Authenticator, Authy, etc.)
+- [ ] MFA verification on login after password step
+- [ ] Recovery codes generated at enrollment (8 single-use codes)
+- [ ] Coach can disable MFA from settings (requires current MFA code to disable)
+- [ ] Enterprise tier: admin can enforce MFA for all team members
+- [ ] MFA status visible in team management for head coaches
+- [ ] Supabase Auth MFA factor management integrated correctly
+
+---
+
+## Issue #69: Share link security with expiring tokens
+**Labels:** `security`, `feature`
+**Milestone:** Security Hardening
+**Priority:** High
+**Description:** Shared playbook links (QR codes, player distribution links) must use cryptographically signed, time-limited tokens instead of predictable or permanent URLs. A leaked share link should not grant indefinite access to playbook content, and old links should expire automatically.
+**Acceptance Criteria:**
+- [ ] Share tokens are cryptographically random (minimum 32 bytes, URL-safe base64)
+- [ ] Tokens include an expiration timestamp (configurable: 24 hours, 1 week, end of season, custom)
+- [ ] Expired tokens return a friendly "This link has expired" page with instructions to request a new one
+- [ ] Coach can manually revoke any active share link from the share management panel
+- [ ] Share links are scoped to specific content (a play, a folder, a game plan) — not a blanket team access grant
+- [ ] Optional PIN protection on share links for extra-sensitive content (e.g., game plan for this week)
+- [ ] Shared content renders in a read-only view with no ability to navigate to unshared team data
+- [ ] Share link access logged (timestamp, IP, device) for the coach to review
+
+---
+
+## Issue #70: XSS sanitization of play names, notes, and user-generated text
+**Labels:** `security`, `core`
+**Milestone:** Security Hardening
+**Priority:** Critical
+**Description:** All user-generated text fields (play names, play notes, scouting notes, tag names, folder names, team names, coach names) must be sanitized to prevent stored XSS attacks. Since this content is rendered in shared views without authentication, an attacker could inject malicious scripts visible to players and other coaches.
+**Acceptance Criteria:**
+- [ ] All user input fields sanitized on the server before storage (strip HTML tags, encode special characters)
+- [ ] Client-side rendering uses safe methods (React's default JSX escaping, no dangerouslySetInnerHTML on user content)
+- [ ] Rich text fields (if any, such as play notes) use an allowlist-based sanitizer (e.g., DOMPurify) permitting only safe formatting tags
+- [ ] SVG/canvas path data validated to prevent script injection via SVG event handlers
+- [ ] Automated tests attempt XSS payloads in every user-input field and verify they are neutralized
+- [ ] Shared/public views (player distribution, QR link pages) apply the same sanitization
+
+---
+
+## Issue #71: CSRF protection on all state-changing API routes
+**Labels:** `security`, `infra`
+**Milestone:** Security Hardening
+**Priority:** High
+**Description:** All state-changing API endpoints (POST, PUT, DELETE) must be protected against Cross-Site Request Forgery. Since the app uses cookie-based sessions via Supabase Auth, an attacker could craft a malicious page that triggers requests on behalf of a logged-in coach.
+**Acceptance Criteria:**
+- [ ] CSRF tokens generated per session and included in all state-changing requests
+- [ ] Server validates CSRF token on every POST/PUT/DELETE request
+- [ ] SameSite=Lax (or Strict) attribute set on all authentication cookies
+- [ ] API routes that accept JSON verify the Content-Type header matches application/json
+- [ ] Supabase client library configured to include CSRF headers automatically
+- [ ] Automated tests verify that requests without valid CSRF tokens are rejected with HTTP 403
+
+---
+
+## Issue #72: File upload validation and size limits
+**Labels:** `security`, `feature`
+**Milestone:** Security Hardening
+**Priority:** High
+**Description:** File uploads (team logos, video clips, imported play data) must be validated for type, size, and content to prevent malicious file storage and serving. An attacker could upload executable files, oversized blobs, or files with misleading extensions to exploit the storage system or other users.
+**Acceptance Criteria:**
+- [ ] File type validated by both extension and MIME type (magic bytes) — not extension alone
+- [ ] Allowed types: images (PNG, JPG, SVG, WebP), video (MP4, WebM), data (JSON, CSV)
+- [ ] SVG uploads sanitized to remove embedded scripts, event handlers, and external references
+- [ ] Image uploads re-encoded/re-saved server-side to strip EXIF data and embedded payloads
+- [ ] Maximum file sizes enforced: images 5MB, videos 100MB, data files 2MB
+- [ ] Total storage quota per team enforced (based on plan tier)
+- [ ] Uploaded files served from a separate domain or CDN with Content-Disposition: attachment where appropriate
+- [ ] Antivirus/malware scan on uploaded files before they are accessible to other users (or use Supabase Storage policies)
+
+---
+
+## Issue #73: Session management and device tracking
+**Labels:** `security`, `feature`
+**Milestone:** Security Hardening
+**Priority:** High
+**Description:** Coaches should have visibility and control over their active sessions across devices. If a coach's device is lost or stolen, they need to be able to revoke access remotely. Session tokens should have reasonable lifetimes and refresh securely.
+**Acceptance Criteria:**
+- [ ] Active sessions listed in coach's account settings (device name/type, IP, last active timestamp)
+- [ ] Coach can revoke any individual session (force logout on that device)
+- [ ] "Log out all devices" option for emergency use
+- [ ] Session tokens expire after 7 days of inactivity (configurable per tier)
+- [ ] Refresh tokens rotate on each use (refresh token rotation)
+- [ ] Session invalidated on password change
+- [ ] Suspicious activity detection: alert coach if login from a new device/location (email notification)
+- [ ] Session data stored securely — never in localStorage in plaintext
+
+---
+
+## Issue #74: API key rotation for Program-tier integrations
+**Labels:** `security`, `feature`
+**Milestone:** Security Hardening
+**Priority:** Medium
+**Description:** Program and Enterprise tier teams have API access for video platform integrations. API keys must be rotatable, scoped, and auditable. A compromised key should be replaceable without disrupting the team's workflow beyond a brief key swap.
+**Acceptance Criteria:**
+- [ ] API keys generated per team with a descriptive label (e.g., "Hudl Integration Key")
+- [ ] Keys are scoped to specific permissions (read-only, read-write, specific resources)
+- [ ] Key rotation: generate a new key before revoking the old one (overlap window)
+- [ ] Old keys can be revoked immediately
+- [ ] API key usage logged (endpoint, timestamp, IP) and visible in team settings
+- [ ] Keys displayed only once at creation — stored hashed server-side
+- [ ] Rate limiting per API key (separate from user session rate limits)
+- [ ] Maximum of 5 active keys per team
+
+---
+
+## Issue #75: GDPR and FERPA compliance for student athlete data
+**Labels:** `security`, `compliance`
+**Milestone:** Security Hardening
+**Priority:** Critical
+**Description:** High school and college programs may store student athlete names, jersey numbers, scouting notes, and quiz performance data — all of which are protected under FERPA (US education records) and potentially GDPR (EU users). The application must provide data governance controls, consent tracking, and data portability to ensure legal compliance.
+**Acceptance Criteria:**
+- [ ] Privacy policy clearly states what data is collected, stored, and shared
+- [ ] Data Processing Agreement (DPA) template available for school districts and institutions
+- [ ] Data export: coach can export all team data as a structured archive (JSON + media files) within 48 hours
+- [ ] Data deletion: coach can request full account and team data deletion — completed within 30 days
+- [ ] Player-facing shared views collect no personal data (no cookies, no tracking, no analytics on shared links)
+- [ ] Scouting notes and tendency data that reference student athletes can be bulk-purged at end of season
+- [ ] Consent banner for any analytics or tracking on the main application (not shared views)
+- [ ] Data residency: documentation of where data is stored (Supabase region) for institutional procurement
+- [ ] Audit log of data access available for compliance reviews
+
+---
+
+## Issue #76: Export watermarking for free-tier and attribution
+**Labels:** `security`, `feature`, `print`
+**Milestone:** Security Hardening
+**Priority:** Medium
+**Description:** Free-tier PDF and PNG exports should include a subtle watermark ("Created with Big Ball Guy") for attribution and to encourage upgrades. Additionally, all exports should embed invisible metadata identifying the source team and export timestamp to deter unauthorized redistribution of paid playbook content.
+**Acceptance Criteria:**
+- [ ] Free-tier exports include a visible "Created with Big Ball Guy" watermark in the footer
+- [ ] Watermark is clean and professional — not obstructive but clearly present
+- [ ] Paid-tier exports have no visible watermark (clean output)
+- [ ] All exports (free and paid) embed invisible metadata: team ID, coach ID, export timestamp, plan tier
+- [ ] Metadata embedded in PNG EXIF/tEXt chunks and PDF document properties
+- [ ] Watermark cannot be trivially removed by cropping (positioned across the content area at low opacity)
+- [ ] Preview of watermarked export shown before download on free tier
+
+---
+
+## Issue #77: Device encryption for offline IndexedDB data
+**Labels:** `security`, `infra`, `mobile`
+**Milestone:** Security Hardening
+**Priority:** Medium
+**Description:** Plays stored in IndexedDB for offline use contain potentially sensitive game plan data. On shared or stolen devices, this data is accessible without authentication. Offline data should be encrypted at rest using a key derived from the coach's credentials so that raw IndexedDB inspection reveals nothing useful.
+**Acceptance Criteria:**
+- [ ] IndexedDB play data encrypted using AES-256-GCM via the Web Crypto API
+- [ ] Encryption key derived from the coach's auth token (PBKDF2 or HKDF) — not stored in plaintext
+- [ ] Decryption happens transparently on app load after authentication
+- [ ] If the auth token is expired and the coach is offline, data remains encrypted until re-authentication
+- [ ] Performance: encryption/decryption adds no more than 50ms latency to play load/save
+- [ ] Fallback: if Web Crypto API is unavailable (very old browsers), warn the user that offline data is unencrypted
+- [ ] Clear all offline data on explicit logout ("Log out" button wipes IndexedDB)
+
+---
+
+## Issue #78: Content Security Policy (CSP) and security headers
+**Labels:** `security`, `infra`
+**Milestone:** Security Hardening
+**Priority:** High
+**Description:** Configure strict HTTP security headers to mitigate XSS, clickjacking, MIME-sniffing, and other client-side attacks. A robust Content Security Policy is especially important because the app renders user-generated content (play names, notes) and embeds third-party video (YouTube, Hudl).
+**Acceptance Criteria:**
+- [ ] Content-Security-Policy header configured: restrict script-src to self and trusted CDNs, disallow inline scripts (use nonces for any necessary inline), restrict frame-src to YouTube and Hudl domains
+- [ ] X-Frame-Options set to DENY (or SAMEORIGIN if the app needs to iframe itself)
+- [ ] X-Content-Type-Options set to nosniff
+- [ ] Referrer-Policy set to strict-origin-when-cross-origin
+- [ ] Strict-Transport-Security (HSTS) header with max-age of at least 1 year and includeSubDomains
+- [ ] Permissions-Policy header disabling unnecessary browser features (camera, microphone, geolocation — unless needed for voice-to-play)
+- [ ] CSP violation reporting endpoint configured to capture and log violations
+- [ ] Headers verified on every deployment via automated test or monitoring
+
+---
+
+## Issue #79: Security audit logging and anomaly detection
+**Labels:** `security`, `infra`
+**Milestone:** Security Hardening
+**Priority:** Medium
+**Description:** All security-relevant events must be logged to an append-only audit trail for incident investigation and compliance. Anomalous patterns (bulk data exports, login from unusual locations, rapid API calls) should trigger alerts so the team can respond before damage occurs.
+**Acceptance Criteria:**
+- [ ] Audit log captures: login success/failure, password changes, MFA enrollment/removal, share link creation/revocation, data exports, team member additions/removals, API key creation/rotation, role changes
+- [ ] Log entries include: timestamp, actor (coach ID), action, target resource, IP address, user agent
+- [ ] Logs stored in an append-only table with RLS preventing modification by any user (service role only)
+- [ ] Log retention: minimum 1 year for compliance
+- [ ] Anomaly alerts: more than 10 failed logins across any accounts from the same IP in 5 minutes
+- [ ] Anomaly alerts: bulk export of more than 50 plays in a single session
+- [ ] Anomaly alerts: access from a TOR exit node or known VPN/proxy (configurable — coaches may use VPNs legitimately)
+- [ ] Admin dashboard for reviewing audit logs with search and filter (Enterprise tier)
+
+---
+
+
+---
+
+# UX & Accessibility (#100-114)
+
+
+---
+
+## Issue #100: [EPIC] UX & Accessibility Improvements
+**Labels:** `epic`, `ui/ux`, `a11y`
+**Milestone:** UX & Accessibility
+**Priority:** High
+**Description:** Comprehensive pass to improve onboarding, error handling, loading states, accessibility compliance, and power-user workflows. Every coach — regardless of ability, device, or experience level — should be able to use the app effectively from their first session.
+**Acceptance Criteria:**
+- [ ] All sub-issues (#101-#114) completed and verified
+- [ ] WCAG 2.1 AA compliance audit passes
+- [ ] Usability tested with 3 coaches who have never seen the app
+
+---
+
+## Issue #101: Onboarding wizard for new coaches
+**Labels:** `ui/ux`, `onboarding`, `feature`
+**Milestone:** UX & Accessibility
+**Priority:** High
+**Description:** A lightweight, skippable onboarding flow that guides new coaches through first-time setup without blocking them from using the app. The wizard should respect the "zero training required" philosophy by being optional and quick, while still helping coaches who want guidance get their system configured faster.
+**Acceptance Criteria:**
+- [ ] Triggered on first login only (not on subsequent visits)
+- [ ] Step 1: Welcome screen with "Quick Setup" and "Skip — Just Start Drawing" options
+- [ ] Step 2: Pick your level (high school, college, pro) — sets default hash mark width and field dimensions
+- [ ] Step 3: Pick 3-5 base formations from visual thumbnails (pre-selects common defaults)
+- [ ] Step 4: Set team colors and upload logo (optional, skippable)
+- [ ] Step 5: Quick draw tutorial — interactive prompt to place a player, draw a route, and save (30 seconds)
+- [ ] Skippable at any step — coach lands in the app immediately
+- [ ] Progress saved — coach can resume setup later from settings
+- [ ] Wizard does not appear again after completion or skip (stored in user preferences)
+
+---
+
+## Issue #102: Contextual empty states for all views
+**Labels:** `ui/ux`, `feature`
+**Milestone:** UX & Accessibility
+**Priority:** Medium
+**Description:** Every view that can be empty (playbook with no plays, game plan with no plays assigned, scratch pad with no sketches) should display a helpful, action-oriented empty state instead of a blank screen. Empty states should tell the coach what this area is for and provide a single clear action to get started.
+**Acceptance Criteria:**
+- [ ] Playbook empty state: illustration + "Your playbook is empty. Draw your first play or pick a formation to get started." + primary action button
+- [ ] Game plan empty state: "No plays added yet. Drag plays from your playbook or tap + to browse." + link to playbook
+- [ ] Scratch pad empty state: "No quick sketches yet. Tap Quick Draw to sketch an idea." + Quick Draw button
+- [ ] Formation library empty state: "Start with our defaults or create your own." + "Load Defaults" button
+- [ ] Scout cards empty state: "Set up a game plan with defense overlays to auto-generate scout cards."
+- [ ] Each empty state includes a relevant illustration or icon (not just text)
+- [ ] Empty states disappear as soon as content is added (no manual dismissal needed)
+
+---
+
+## Issue #103: Error boundary with recovery options
+**Labels:** `ui/ux`, `infra`
+**Milestone:** UX & Accessibility
+**Priority:** High
+**Description:** React error boundaries should catch rendering failures across the app and display a user-friendly recovery screen instead of a white screen or cryptic error. The canvas is especially critical — a crash in the play designer should not lose the coach's current work or require a full page reload.
+**Acceptance Criteria:**
+- [ ] Top-level error boundary catches unhandled exceptions and renders a friendly error screen
+- [ ] Canvas-specific error boundary wraps the play designer — if the canvas crashes, the sidebar and navigation remain functional
+- [ ] Error screen shows: "Something went wrong" message, "Try Again" button (re-renders the component), "Go Home" button (navigates to dashboard)
+- [ ] Error details logged to a monitoring service (Sentry or equivalent) with play ID, coach ID, and action context
+- [ ] Auto-save state preserved — recovering from an error does not lose unsaved changes (IndexedDB snapshot intact)
+- [ ] Canvas recovery attempts to reload the last saved state of the play
+- [ ] Error boundary does not trigger on expected errors (network offline, 404s) — only on unexpected crashes
+
+---
+
+## Issue #104: Loading skeletons for all data-fetching views
+**Labels:** `ui/ux`, `feature`
+**Milestone:** UX & Accessibility
+**Priority:** Medium
+**Description:** Replace all loading spinners with skeleton screens that match the shape of the content being loaded. Skeletons reduce perceived load time and prevent layout shift, making the app feel faster and more polished — especially on slow school WiFi networks.
+**Acceptance Criteria:**
+- [ ] Playbook grid view: skeleton cards matching play thumbnail dimensions
+- [ ] Game plan view: skeleton situation slots with placeholder play cards
+- [ ] Formation picker: skeleton thumbnail grid
+- [ ] Play editor: skeleton field canvas with placeholder toolbar
+- [ ] Settings page: skeleton form fields
+- [ ] Skeletons animate with a subtle shimmer effect (pulsing gradient)
+- [ ] Skeletons match dark mode and light mode color schemes
+- [ ] Transition from skeleton to real content is smooth (no flash or layout jump)
+
+---
+
+## Issue #105: Color-blind safe palette for routes and canvas elements
+**Labels:** `ui/ux`, `a11y`
+**Milestone:** UX & Accessibility
+**Priority:** High
+**Description:** Route lines, blocking assignments, coverage zones, and scouting alerts currently rely on color to convey meaning (red = unblocked, green = advantage). Approximately 8% of male coaches are color-blind. The app must use a palette that is distinguishable by users with protanopia, deuteranopia, and tritanopia, and supplement color with shape/pattern cues.
+**Acceptance Criteria:**
+- [ ] Default route/blocking color palette tested with a color-blindness simulator (Coblis or similar) for all three common types
+- [ ] Scouting alerts use shape + color (e.g., triangle icon for warning, not just red)
+- [ ] Coverage zone overlays use hatching patterns in addition to color fills
+- [ ] Numbers advantage indicators use icons (+ / - / =) alongside green/yellow/red
+- [ ] "Color-blind mode" toggle in settings that switches to a high-contrast, pattern-heavy palette
+- [ ] Color-blind palette does not degrade the visual quality for non-color-blind users
+- [ ] All color choices pass WCAG 2.1 AA contrast ratio (4.5:1 for text, 3:1 for large elements)
+
+---
+
+## Issue #106: Full keyboard navigation for all features
+**Labels:** `ui/ux`, `a11y`
+**Milestone:** UX & Accessibility
+**Priority:** High
+**Description:** Every feature in the app must be operable via keyboard alone, without requiring a mouse or touch input. This is essential for accessibility compliance (WCAG 2.1 AA) and also benefits power-user coaches who work faster with keyboard-driven workflows at a desk.
+**Acceptance Criteria:**
+- [ ] All interactive elements (buttons, links, dropdowns, modals, pickers) are focusable via Tab key
+- [ ] Focus order follows a logical reading/interaction sequence on every page
+- [ ] Visible focus indicator on all focused elements (not just browser default — styled to match the dark theme)
+- [ ] Modal dialogs trap focus within the modal and return focus to the trigger on close
+- [ ] Formation picker, concept picker, and defense picker navigable with arrow keys and selectable with Enter
+- [ ] Canvas player selection via arrow keys (cycle through players) and route drawing mode via keyboard shortcuts
+- [ ] Escape key closes any open panel, modal, or picker
+- [ ] No keyboard traps — user can always Tab out of any component
+- [ ] Skip-to-content link at the top of every page for screen reader users
+
+---
+
+## Issue #107: Font scaling and text size accessibility
+**Labels:** `ui/ux`, `a11y`
+**Milestone:** UX & Accessibility
+**Priority:** Medium
+**Description:** Coaches with low vision or those projecting the app in meeting rooms need to increase text size without breaking the layout. All text must use relative units and the UI must remain functional at up to 200% browser zoom and with system-level font size overrides.
+**Acceptance Criteria:**
+- [ ] All font sizes defined in rem or em units — no hardcoded px values for text
+- [ ] UI remains fully functional at 200% browser zoom (no overlapping text, no hidden controls, no horizontal scroll)
+- [ ] Respects OS-level font size preferences (e.g., iOS Dynamic Type, Android font scale)
+- [ ] Canvas player labels scale proportionally with zoom level
+- [ ] Call sheet and wristband print layouts accommodate larger text without breaking grid structure
+- [ ] In-app font size control in settings: Small / Medium / Large / Extra Large
+- [ ] Minimum text size across the app is 14px equivalent (no text smaller than that at default zoom)
+
+---
+
+## Issue #108: Confirmation dialogs for destructive actions
+**Labels:** `ui/ux`, `feature`
+**Milestone:** UX & Accessibility
+**Priority:** High
+**Description:** Destructive actions (deleting plays, removing a game plan, clearing a folder, revoking a share link, deleting the team) must require explicit confirmation to prevent accidental data loss. Confirmation dialogs should clearly describe what will be lost and offer a final chance to cancel.
+**Acceptance Criteria:**
+- [ ] Delete play: "Delete [play name]? This cannot be undone. Plays referenced in game plans will also be removed." + Cancel / Delete buttons
+- [ ] Delete folder: "Delete [folder name] and all [N] plays inside? This cannot be undone." + Cancel / Delete
+- [ ] Delete game plan: "Delete game plan for Week [N] vs [opponent]?" + Cancel / Delete
+- [ ] Clear scratch pad: "Clear all [N] scratch plays? This cannot be undone." + Cancel / Clear All
+- [ ] Revoke share link: "Revoke this share link? Anyone with this link will lose access immediately." + Cancel / Revoke
+- [ ] Delete team: Requires typing the team name to confirm (high-friction confirmation for high-stakes action)
+- [ ] Destructive button styled in red/warning color, positioned away from the cancel button to prevent mis-taps
+- [ ] Confirmation dialogs are keyboard accessible (Escape to cancel, Enter to confirm when the cancel button is focused by default)
+
+---
+
+## Issue #109: Undo toast notification with undo action
+**Labels:** `ui/ux`, `feature`
+**Milestone:** UX & Accessibility
+**Priority:** Medium
+**Description:** For reversible destructive actions (deleting a play, removing a play from a game plan, clearing tags), show a toast notification at the bottom of the screen with an "Undo" button instead of requiring a confirmation dialog. This follows the "undo over confirm" pattern that reduces friction while still preventing data loss.
+**Acceptance Criteria:**
+- [ ] Toast appears at the bottom of the screen after a reversible destructive action
+- [ ] Toast message describes what happened: "Play deleted" / "Removed from game plan" / "Tags cleared"
+- [ ] "Undo" button on the toast reverses the action immediately
+- [ ] Toast auto-dismisses after 8 seconds if no action is taken
+- [ ] Action is soft-deleted during the toast window — only hard-deleted after the toast dismisses
+- [ ] Multiple toasts stack (most recent on top) if rapid actions are taken
+- [ ] Toast is accessible: announced to screen readers, Undo button is keyboard-focusable
+- [ ] Works alongside the canvas undo/redo system (Ctrl+Z) without conflict
+
+---
+
+## Issue #110: Feature discovery tooltips
+**Labels:** `ui/ux`, `onboarding`
+**Milestone:** UX & Accessibility
+**Priority:** Low
+**Description:** Power features (concept assembly, defense overlay, blocking auto-assign, scout card generation, Cmd+K search) are invisible to coaches who do not explore the UI. Contextual tooltips should surface these features at the right moment — when the coach is doing something that a power feature could accelerate.
+**Acceptance Criteria:**
+- [ ] "Did you know?" tooltip when coach manually draws 5+ routes: "Tip: Use Concept Assembly to auto-draw routes from your library. Try tapping the Concept picker."
+- [ ] Tooltip when coach creates a game plan without a defense overlay: "Add a defense overlay to see how your plays look against their front."
+- [ ] Tooltip when coach exports plays one by one: "Tip: Select multiple plays and export them all at once as a PDF."
+- [ ] Tooltip when coach draws blocking manually vs a defense: "Your blocking scheme library can auto-assign blocks. Set it up in Libraries."
+- [ ] Each tooltip shown at most once per coach (stored in preferences)
+- [ ] Tooltips are dismissible with an "X" and a "Don't show tips" toggle in settings
+- [ ] Tooltips are non-blocking — they do not cover the content the coach is working on
+- [ ] Tooltips appear with a subtle animation (fade in, not pop)
+
+---
+
+## Issue #111: Breadcrumb navigation for nested views
+**Labels:** `ui/ux`, `feature`
+**Milestone:** UX & Accessibility
+**Priority:** Medium
+**Description:** When a coach drills into nested views (Playbook > Offense > Run Game > Inside Zone > specific play), they need a clear breadcrumb trail showing where they are and how to navigate back. Without breadcrumbs, coaches lose context and resort to the browser back button, which may behave unpredictably in a single-page app.
+**Acceptance Criteria:**
+- [ ] Breadcrumb bar renders below the top navigation on all nested views
+- [ ] Breadcrumb path reflects the current location: Home > Playbook > [Folder] > [Sub-folder] > [Play Name]
+- [ ] Each breadcrumb segment is clickable and navigates to that level
+- [ ] Game plan breadcrumbs: Home > Game Plans > Week [N] vs [Opponent] > [Section]
+- [ ] Practice script breadcrumbs: Home > Practice > [Date] > [Period]
+- [ ] Breadcrumbs truncate gracefully on narrow screens (show first and last segments with "..." in between)
+- [ ] Breadcrumbs update in real-time as the coach navigates
+- [ ] Breadcrumbs are accessible: rendered as a nav element with aria-label="Breadcrumb"
+
+---
+
+## Issue #112: Search-everything command palette (Cmd+K)
+**Labels:** `ui/ux`, `feature`
+**Milestone:** UX & Accessibility
+**Priority:** Medium
+**Description:** A global command palette (triggered by Cmd+K or Ctrl+K) that lets coaches search across plays, formations, game plans, settings, and actions from anywhere in the app. This is the power-user equivalent of the playbook search but scoped to the entire application — coaches should never need to navigate to a specific page to find something.
+**Acceptance Criteria:**
+- [ ] Cmd+K (Mac) / Ctrl+K (Windows) opens a centered modal search palette from any page
+- [ ] Search across: play names, formation names, game plan names, folder names, tags, coach names, settings pages
+- [ ] Results grouped by category (Plays, Formations, Game Plans, Actions, Settings)
+- [ ] Actions searchable: "Export", "New Play", "Quick Draw", "Share", "Dark Mode", "Keyboard Shortcuts"
+- [ ] Fuzzy matching: typing "msh" finds "Mesh", typing "iz" finds "Inside Zone"
+- [ ] Arrow keys navigate results, Enter selects, Escape closes
+- [ ] Recent searches shown when palette opens with no query
+- [ ] Results render within 100ms of keystroke (client-side index, no server round-trip)
+- [ ] Accessible: palette is announced to screen readers, results are navigable via keyboard only
+
+---
+
+## Issue #113: Settings page with organized preference panels
+**Labels:** `ui/ux`, `feature`
+**Milestone:** UX & Accessibility
+**Priority:** Medium
+**Description:** A centralized settings page where coaches can manage account preferences, team configuration, display options, and security settings. Currently settings are scattered or missing — a single organized page reduces confusion and makes the app feel polished and trustworthy.
+**Acceptance Criteria:**
+- [ ] Settings accessible from the top navigation (gear icon) and from Cmd+K search
+- [ ] Account panel: name, email, password change, MFA enrollment, session management, delete account
+- [ ] Team panel: team name, colors, logo, manage coaches (invite, remove, change roles), plan/billing
+- [ ] Display panel: theme (dark/light/system), font size, color-blind mode, field hash marks (high school/college/pro), default zoom level
+- [ ] Notifications panel: email notifications for team invites, share link access, security alerts
+- [ ] Data panel: export all data, delete all data, privacy settings
+- [ ] Keyboard shortcuts reference panel (same content as the ? overlay)
+- [ ] Settings changes save immediately with a subtle "Saved" confirmation
+- [ ] Settings page is responsive and works on mobile
+
+---
+
+## Issue #114: Screen reader support and ARIA landmarks
+**Labels:** `ui/ux`, `a11y`
+**Milestone:** UX & Accessibility
+**Priority:** High
+**Description:** The app must be usable with screen readers (VoiceOver, NVDA, JAWS) for coaches with visual impairments. This requires proper ARIA landmarks, roles, labels, and live regions throughout the application. The canvas-based play designer presents a unique challenge and needs an alternative text representation for screen reader users.
+**Acceptance Criteria:**
+- [ ] ARIA landmarks on every page: banner, navigation, main, complementary (sidebar), contentinfo (footer)
+- [ ] All interactive elements have accessible names (aria-label or visible label association)
+- [ ] Form inputs have associated labels (not just placeholder text)
+- [ ] Dynamic content changes announced via aria-live regions (save status, toast notifications, error messages)
+- [ ] Canvas play diagrams have an aria-label describing the play: "[Play Name]: [Formation], [Concept], [N] routes, [N] blocking assignments"
+- [ ] Play details available as a text-based alternative view: list of players with their assignments (e.g., "X: Post route, 15 yards. Z: Dig route, 12 yards.")
+- [ ] Dropdown menus, modals, and pickers use correct ARIA roles (menu, dialog, listbox)
+- [ ] Screen reader testing completed with VoiceOver (Mac/iOS) and NVDA (Windows)
+- [ ] No ARIA misuse — roles match actual component behavior
+
+---
+
+## Issue Summary (Audit)
+
+| Category | Issue Range | Count | Focus |
+|----------|------------|-------|-------|
+| Security | #65-79 | 15 | RLS, auth, tokens, XSS, CSRF, uploads, sessions, compliance, encryption, CSP, audit logging |
+| UX & Accessibility | #100-114 | 15 | Onboarding, empty states, errors, loading, color-blind, keyboard, font scaling, undo, search, settings, screen readers |
+| **Total** | | **30 issues** | |
