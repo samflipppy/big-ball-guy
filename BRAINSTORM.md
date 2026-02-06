@@ -482,6 +482,98 @@ The app has ONE primary view — the play canvas. Everything else is just a diff
 
 Six modes, but NOT six different apps. The chrome around the canvas changes. The canvas itself is always the same play designer the coach already knows.
 
+### 15. Touch-Safe Interactions — No Drag-and-Drop Traps
+
+Standard HTML drag-and-drop is BROKEN on mobile/tablet. It conflicts with scrolling, pinch-zoom, and browser gestures. We can't just slap desktop DnD onto an iPad and call it done. Every interaction needs a touch-native alternative.
+
+#### The Problem with Drag-and-Drop on Touch
+
+- A "drag" on mobile is also a "scroll." The browser doesn't know which one you mean.
+- Long-press-to-drag delays feel sluggish and unpredictable.
+- Accidentally dragging a play when you meant to scroll is infuriating.
+- Drop targets are hard to hit precisely with a finger.
+- If the coach pinch-zooms while dragging, everything breaks.
+
+#### The Solution: Tap-to-Select, Tap-to-Place (Primary) + Drag (Optional)
+
+**On the field canvas (placing players, drawing routes):**
+- This is fine as drag/draw — the canvas is a controlled area, not a scrollable list.
+- We own the touch handling here. Finger on a player = move it. Finger on empty field = pan.
+- Clear mode separation: "Select" mode (tap to select, drag to move) vs "Draw" mode (finger draws a route). Toggle between them with a prominent button.
+- Visual cues: selected player gets a glow ring. Draw mode shows a pencil cursor/icon.
+
+**On lists and organizational views (playbook → game plan, game plan → practice script):**
+- **PRIMARY: Tap-to-select, then tap destination.** This is the touch-safe pattern:
+  1. Coach taps a play in the playbook → it highlights with a checkmark.
+  2. Coach taps (or multi-selects several plays).
+  3. Coach taps the "Add to →" button → sees the situation slots.
+  4. Coach taps "Red Zone" → plays land there. Done.
+  - No dragging. No collision with scrolling. Works perfectly on any device.
+
+- **SECONDARY: Desktop drag-and-drop.** On desktop with a mouse, drag-and-drop also works because there's no scroll conflict. But it's a bonus, not the primary interaction.
+
+- **Reordering within a list:** Tap the play, then use up/down arrow buttons to reorder. Or a "move to position" tap. Again, no drag required.
+
+#### Mode Indicators — Always Know What Your Finger Will Do
+
+The #1 confusion on touch canvas apps: "will my finger move this player, draw a route, or scroll the field?" We solve this with:
+
+- **Clear mode toggle** at the bottom of the screen (large, thumb-reachable):
+  - **Select** (hand icon) — tap to select players, drag to move them
+  - **Draw** (pencil icon) — finger draws routes/assignments
+  - **Pan** (arrows icon) — finger scrolls/zooms the field
+- **The current mode is ALWAYS visible** — highlighted button, maybe a subtle border color change on the canvas
+- **Auto-mode switching:** tap a player in Draw mode → starts drawing from that player. Tap empty space in Select mode → deselects all. Smart defaults reduce mode switching.
+
+### 16. Auto-Save & Never Lose Work
+
+A coach closes the tab, their phone dies, Safari crashes, they accidentally hit the back button. Doesn't matter. **Nothing is ever lost.**
+
+#### Continuous Auto-Save
+
+- **Every change saves instantly.** No save button needed (though we show one for comfort).
+- Debounced writes — batch rapid changes (dragging a player around) into a single save every 500ms.
+- **Save indicator:** a tiny cloud icon in the corner.
+  - Checkmark = saved.
+  - Spinning = saving.
+  - Warning triangle = offline (will sync later).
+- The coach never thinks about saving. It just happens.
+
+#### Local-First Architecture
+
+- All play data is written to **IndexedDB (browser local storage) FIRST**, then synced to Supabase.
+- This means:
+  - **Instant saves** — no network round-trip needed
+  - **Works offline** — create and edit plays with no internet
+  - **Tab crash recovery** — data is already in IndexedDB, not in memory
+  - **Slow WiFi doesn't matter** — the UI never waits for the server
+- When the network is back, changes sync in the background. Conflict resolution: last-write-wins at the play level (simple, good enough for v1).
+
+#### Session Recovery
+
+- **Close tab + reopen → you're exactly where you left off.** Same play open, same zoom level, same mode.
+- **Browser back button:** doesn't navigate away from the editor. Instead, it undoes the last action (or navigates back through plays if in the playbook view). The `beforeunload` event warns if there are truly unsaved changes (there shouldn't be, but as a safety net).
+- **"Recently edited" section** on the home screen — the last 10 plays the coach touched, with timestamps. One tap to jump back in.
+
+#### Version History (Phase 2+)
+
+- Every save creates a lightweight snapshot.
+- Coach can tap "History" on any play → see a timeline of changes → tap to preview → restore any version.
+- Not git-level complexity. Just "here's what this play looked like yesterday, last week, last month."
+- Covers the "oh no I changed Mesh and broke it, what did it look like before?" panic.
+
+#### Data Safety Summary
+
+| Scenario | What happens |
+|---|---|
+| Close tab | Auto-saved to IndexedDB + cloud. Reopen → right where you left off. |
+| Phone dies | Same as close tab. IndexedDB persists across sessions. |
+| No WiFi | Everything works. Saves locally. Syncs when back online. |
+| Safari crash | IndexedDB survives crashes. No data lost. |
+| Delete browser cache | Cloud backup has everything. Re-syncs on next load. |
+| Accidental edit | Undo (Ctrl+Z) or version history to restore. |
+| "Which version did I have?" | Version history timeline on every play. |
+
 ### UX Principles Summary
 
 | Principle | What it means in practice |
