@@ -3,6 +3,7 @@
 import { Sidebar } from '@/components/ui/Sidebar';
 import { DarkModeToggle } from '@/components/ui/DarkModeToggle';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
+import { CommandPalette } from '@/components/ui/CommandPalette';
 import { useAppStore } from '@/stores/playStore';
 import { cn } from '@/lib/utils';
 
@@ -15,6 +16,7 @@ export default function AppLayout({
 
   return (
     <div className="flex h-screen overflow-hidden bg-white dark:bg-zinc-950">
+      <CommandPalette />
       <Sidebar teamName="My Team" />
 
       <div className="flex flex-1 flex-col overflow-hidden">
