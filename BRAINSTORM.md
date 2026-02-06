@@ -363,6 +363,125 @@ For the OC sitting at a desk building the whole playbook:
 
 Not required to use the app. But power users will fly.
 
+### 14. Coach Workflows — One Tool, Every Context
+
+A coach doesn't just "make plays." They operate in completely different modes depending on the day, the moment, and the audience. The critical insight: **a play is created ONCE and flows into every context automatically.** The coach never rebuilds, re-exports, or reformats. The same play data powers everything below.
+
+#### Mode 1: Quick Sketch ("Napkin Mode")
+
+**When:** Staff meeting, phone call with a coordinator, halftime, bus ride, random 2 AM idea.
+**Need:** Get a play drawn in under 30 seconds. No friction. No saving required.
+
+- **One-tap entry** — a "Quick Draw" button always visible. Tap it, you're on a blank field, drawing.
+- No title required, no folder, no tags. Just draw.
+- Auto-saves to a "Scratch Pad" inbox. Coach can organize later or never.
+- Think of it like Apple Notes — you open it and start writing. No setup.
+- Scratch plays can be promoted to the full playbook later with one tap: "Add to playbook → pick folder → done."
+- The scratch pad is the first thing the coach sees when they have a half-baked idea. Zero commitment.
+
+#### Mode 2: Playbook Building ("Architect Mode")
+
+**When:** Offseason, preseason camp, installing a new system.
+**Need:** Build the master library. Organized, tagged, complete.
+
+- This is the deep work mode. Coach is at a desk or iPad with time.
+- **Folder structure mirrors how coaches think:** Offense → Run Game → Inside Zone → variations. Or Offense → Pass Game → Dropback → Mesh → variations.
+- **Concept-first organization** — coaches don't think "Play #47", they think "Mesh out of Trips." The playbook should organize by concept, not by arbitrary numbers.
+- **Bulk operations** — duplicate a play into 4 formation variants with one action. "I want Mesh out of Spread, Trips, Empty, and Bunch." Tap tap tap tap, done.
+- **Tagging is fast and optional** — situation tags (red zone, 3rd & long, 2-minute), personnel tags (11, 12, 21), concept tags. Never required, but powerful when used.
+- **Visual playbook browser** — see plays as thumbnail cards in a grid, not a text list. Coaches recognize plays visually, not by name.
+
+#### Mode 3: Game Planning ("War Room Mode")
+
+**When:** Monday through Friday of game week. Preparing for a specific opponent.
+**Need:** Pull plays from the master playbook and organize them into a game plan for THIS week vs THIS opponent.
+
+- **"New Game Plan" → pick opponent → pick week.**
+- Left panel: the coach's full playbook (filterable). Right panel: the game plan slots.
+- **Drag plays from the playbook INTO the game plan.** The play isn't copied — it's referenced. Edit the master, the game plan updates.
+- **Game plan organized by situation:**
+  - Openers (scripted first 15)
+  - 1st & 10
+  - 2nd & Medium
+  - 2nd & Long
+  - 3rd & Short
+  - 3rd & Long
+  - Red Zone
+  - Goal Line
+  - 2-Minute
+  - Backed Up (own 1-10)
+- **Defense overlay per section** — "Our 1st & 10 plays, shown against their base 4-3 Cover 3." One toggle and every play in that section renders with the opponent's front.
+- **"How does this look against their stuff?"** — the core question of game planning, answered visually and instantly.
+
+#### Mode 4: Practice Scripting ("Practice Mode")
+
+**When:** Day before or morning of practice.
+**Need:** Build the practice script — an ordered list of plays the team will run, organized by period.
+
+- **Practice template:** Coaches run practice in periods (Indy, Inside Run, Team Pass, Team Run, Red Zone, 2-Min, etc.)
+- **Drag plays from the game plan into practice periods.** Again, referenced not copied.
+- **Script view:** A clean sequential list — Period 1: plays 1-8. Period 2: plays 1-10. Etc.
+- **Print-ready in one tap** — formatted for the coach's clipboard or projected on the practice field screen.
+- **Scout team cards auto-generate** — if a play has a defense overlay, the scout card is already done. Print the defensive look for the scout team to line up in.
+- **Rep tracking (future)** — check off plays as they're run. Track what got repped and what didn't. "We scripted 15 red zone plays but only got to 9."
+
+#### Mode 5: Game Day ("Sideline Mode")
+
+**When:** Saturday / Friday night. On the sideline or in the press box.
+**Need:** The call sheet. Fast reference. No fumbling.
+
+- **Auto-generated call sheet** from the game plan. One tap, it's formatted.
+- **Laminated card layout** — plays organized by situation in a grid, color-coded by run/pass/screen/play-action.
+- **Big text, high contrast** — readable in sunlight, rain, under stadium lights.
+- **Tap any play on the call sheet → see the full diagram instantly.** Quick reference if the coach forgets the protection or a route adjustment.
+- **Wristband auto-generated** — select which plays go on the QB wristband, auto-formatted into the grid, print and cut.
+- **Halftime scratch pad** — quick draw mode is one tap away. Coach sees something at halftime, sketches an adjustment, shows the staff.
+
+#### Mode 6: Player Distribution ("Share Mode")
+
+**When:** After install meetings, before walkthroughs, anytime players need to see plays.
+**Need:** Get plays to players' phones. Instantly. No app download.
+
+- **Position-filtered views** — the X receiver only sees his route and assignment, not the whole play. Less noise, faster learning.
+- **Meeting deck mode** — project plays on a screen in a team meeting. Swipe through one by one. Animate on tap.
+- **QR code on the board** — coach projects QR code, players scan, they have the install on their phones. No group chat, no email attachment, no "coach can you send that again."
+- **Player view is read-only, clean, mobile-optimized** — dark background, big diagrams, swipe to browse. No login required (share link with expiration).
+- **Quiz mode (future)** — show a formation, ask the player "what's your assignment?" Flash card style learning from the actual playbook.
+
+#### The Data Flow
+
+This is the key architecture decision. A play lives in ONE place:
+
+```
+MASTER PLAYBOOK (source of truth)
+    │
+    ├──→ Game Plan (references plays, adds situation/opponent context)
+    │       │
+    │       ├──→ Practice Script (orders plays by period)
+    │       ├──→ Call Sheet (formats plays for sideline)
+    │       ├──→ Wristband (subset, grid format)
+    │       └──→ Scout Cards (play + defense overlay, print-ready)
+    │
+    └──→ Player Share (filtered view per position)
+```
+
+**Edit a play in the master playbook → it updates everywhere.** The game plan, the practice script, the call sheet, the wristband — all reflect the change. No version control nightmares. No "wait, which version of Mesh did we put on the call sheet?"
+
+#### What This Means for the UI
+
+The app has ONE primary view — the play canvas. Everything else is just a different way to ORGANIZE and PRESENT the same plays:
+
+| Mode | Entry Point | What the Coach Sees |
+|---|---|---|
+| Quick Sketch | "Quick Draw" button | Blank field, start drawing |
+| Playbook | "Playbook" tab | Folder tree + play thumbnails |
+| Game Plan | "Game Plans" tab → new/select week | Situation slots + playbook sidebar |
+| Practice | "Practice" tab → new/select date | Period list + game plan sidebar |
+| Game Day | "Game Day" tab | Call sheet + wristband layouts |
+| Share | Share icon on any play/collection | QR code + link + position filter |
+
+Six modes, but NOT six different apps. The chrome around the canvas changes. The canvas itself is always the same play designer the coach already knows.
+
 ### UX Principles Summary
 
 | Principle | What it means in practice |
