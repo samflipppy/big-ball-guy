@@ -1622,6 +1622,132 @@ Allow coaches to define IF/THEN rules on plays that automatically show adjustmen
 
 ---
 
+---
+
+# Phase 8: High-Impact Product Features & Revenue Add-Ons
+
+> These issues capture high-demand features identified through competitive analysis.
+> Many enhance existing issues with additional scope — cross-references noted.
+
+---
+
+## Issue #400: Enhanced Scout Card Generator — Upload Tendencies & Auto-Format
+**Labels:** `output`, `coach-workflow`, `high-demand`
+**Milestone:** Phase 5 (Output)
+**Priority:** High
+**Description:** Coaches hate making scout cards manually. Extend the existing scout card system (#40) to accept uploaded opponent tendency data (CSV, typed, or even photo-to-text) and auto-format printable scout cards grouped by down-and-distance, formation, and field zone. Output should be print-ready PDF with configurable layouts.
+**Acceptance Criteria:**
+- [ ] Upload opponent tendencies via CSV or manual entry form
+- [ ] Auto-group tendencies by situation (down/distance, field zone, formation)
+- [ ] Generate formatted scout cards with play diagrams from tendency data
+- [ ] Print-ready PDF output with customizable page layout (1-up, 2-up, 4-up)
+- [ ] Option to include frequency percentages and notes per tendency
+- [ ] Photo-to-tendency OCR stretch goal (snap a film breakdown sheet)
+
+---
+
+## Issue #401: Enhanced Practice Script Builder — Drag Plays From Playbook
+**Labels:** `output`, `coach-workflow`, `high-demand`
+**Milestone:** Phase 5 (Output)
+**Priority:** High
+**Description:** Extend the practice script system (#39) with drag-and-drop play insertion directly from the playbook drawer. Coaches script practice every single week — this is the stickiest operational feature. Support period-based organization (Inside Run, Blitz Pickup, Red Zone, etc.) with time allocation and export to PDF/tablet.
+**Acceptance Criteria:**
+- [ ] Drag plays from playbook sidebar directly into practice periods
+- [ ] Period templates (team, indy, 7-on-7, special teams) with configurable durations
+- [ ] Reorder plays within periods via drag-and-drop
+- [ ] Copy previous week's script as a starting template
+- [ ] Export full practice script to PDF with play thumbnails
+- [ ] Tablet-optimized view for use on the practice field
+- [ ] Track tempo (plays per minute) per period
+
+---
+
+## Issue #402: Wristband Play Formatter — Auto-Shrink & Print-Ready
+**Labels:** `output`, `game-day`, `high-demand`, `low-difficulty`
+**Milestone:** Phase 5 (Output)
+**Priority:** High
+**Description:** Extend the wristband generator (#38) to auto-shrink play calls into wristband format with numbering. Coaches literally sit in Word formatting these in 2026. Auto-generate numbered play call lists from game plan sections, with customizable font sizes, column layouts, and print-ready output that cuts to wristband size.
+**Acceptance Criteria:**
+- [ ] Auto-number plays from game plan sections (1 – Trips Right 34 Zone, etc.)
+- [ ] Configurable column count (1-4 columns per wristband)
+- [ ] Font size auto-scaling to fit content
+- [ ] Color-coded by situation/category
+- [ ] Print layout with cut lines for standard wristband sizes
+- [ ] Support both text-only and mini-diagram wristband modes
+- [ ] One-click generate from any game plan
+
+---
+
+## Issue #403: Animated Play Viewer — Simple 2D Route Animation
+**Labels:** `canvas`, `player-facing`, `differentiation`
+**Milestone:** Phase 6 (Future)
+**Priority:** Medium
+**Description:** Extend the play animation system (#45) with a clean, simple 2D animation viewer. Not Madden-level — just routes animating along their paths with players moving to positions. Tap play → routes animate. Pause/rewind. Send to players via share link. This immediately differentiates from every legacy tool.
+**Acceptance Criteria:**
+- [ ] Tap any play to see routes animate along drawn paths
+- [ ] Player icons move along route paths with configurable speed
+- [ ] Playback controls: play, pause, rewind, speed (0.5x, 1x, 2x)
+- [ ] Blocking assignments animate (step/pull/reach shown as movement)
+- [ ] Share animated play via link (player can view without login)
+- [ ] Works on mobile — optimized for player viewing on phone
+- [ ] Pre-snap motion/shifts animate before route phase
+
+---
+
+## Issue #404: Play Template Marketplace — Coach-to-Coach Play Sharing
+**Labels:** `business`, `revenue`, `marketplace`
+**Milestone:** Phase 9 (Revenue)
+**Priority:** Medium
+**Description:** Let coaches publish and sell play packages (formation sets, full installs, game plan templates) through an in-app marketplace. Take a 20% platform fee. Football coaches love swapping ideas — this creates network effects and recurring revenue. Start with free sharing, add paid tiers later.
+**Acceptance Criteria:**
+- [ ] Coaches can publish plays/formations/concepts as a "package"
+- [ ] Package listing with title, description, preview thumbnails, tags (level, offense style)
+- [ ] Free and paid packages supported
+- [ ] One-click install: imports plays, formations, and concepts into buyer's playbook
+- [ ] Rating and review system for packages
+- [ ] Creator dashboard showing downloads, revenue, ratings
+- [ ] Platform takes configurable revenue share (default 20%)
+- [ ] Stripe Connect integration for creator payouts
+- [ ] Content moderation queue for published packages
+
+---
+
+## Issue #405: Team Playbook App for Players — Read-Only Mobile Install Viewer
+**Labels:** `player-facing`, `retention`, `mobile`
+**Milestone:** Phase 6 (Future)
+**Priority:** High
+**Description:** Provide a read-only mobile playbook experience for players. Players log in with a team code, see their installs organized by position group, and can study plays with animated routes. This makes the product dramatically stickier once adopted — the whole team depends on it. No editing, just viewing.
+**Acceptance Criteria:**
+- [ ] Player login via team invite code (no email required for minors/FERPA)
+- [ ] Position-filtered view: player only sees plays relevant to their position
+- [ ] Organized by install week / game plan
+- [ ] Play detail view with animated routes and assignments
+- [ ] Offline support — download playbook for study without internet
+- [ ] Coach controls what players can see (toggle play visibility)
+- [ ] Push notification when new installs are added
+- [ ] No edit capabilities — strictly read-only
+- [ ] Works as PWA installable on iOS and Android
+
+---
+
+## Issue #406: Install Quiz Generator — Auto-Generate Quizzes From Plays
+**Labels:** `player-facing`, `education`, `retention`
+**Milestone:** Phase 6 (Future)
+**Priority:** Medium
+**Description:** Extend the quiz system (#49) to auto-generate quizzes directly from the playbook. Show a play diagram → ask "What's your assignment?" or "What's the play call?" Coaches love testing player recall, and this turns the playbook from a reference tool into a learning platform. Track completion rates per player.
+**Acceptance Criteria:**
+- [ ] Auto-generate quiz questions from any play or game plan section
+- [ ] Question types: identify play call, identify assignment, identify formation, fill-in route
+- [ ] Position-specific quizzes (RB only sees RB assignments)
+- [ ] Timed and untimed modes
+- [ ] Player completion tracking dashboard for coaches
+- [ ] Spaced repetition for plays the player gets wrong
+- [ ] Weekly quiz assignment: coach assigns quiz → players get notification
+- [ ] Leaderboard for competitive motivation (optional, coach-toggled)
+- [ ] Export quiz results as PDF for coaches
+
+---
+
 ## Issue Summary
 
 | Phase | Issue Count | Focus |
@@ -1635,4 +1761,5 @@ Allow coaches to define IF/THEN rules on plays that automatically show adjustmen
 | Phase 6: Future | #45-50 | Animation, voice, collab, Hudl, quiz, wizard |
 | Phase 7: Scouting Intelligence | #59-64 | Alerts, coverage windows, notes, tendencies, exploits, hot routes |
 | Infrastructure | #51-58 | Dark mode, responsive, PWA, shortcuts, print |
-| **Total** | **64 issues** | |
+| Phase 8: High-Impact Features | #400-406 | Enhanced scout cards, practice scripts, wristbands, animation, marketplace, player app, quizzes |
+| **Total** | **71 issues** | |
