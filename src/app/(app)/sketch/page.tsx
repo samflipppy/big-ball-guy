@@ -1,83 +1,266 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/Button';
 import { useAppStore } from '@/stores/playStore';
-import { EmptyState } from '@/components/ui/EmptyState';
+import { useHistoryStore } from '@/stores/playStore';
+import { PlayRenderer } from '@/components/canvas/PlayRenderer';
+import { DrawingTools } from '@/components/canvas/DrawingTools';
+import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/Modal';
+import { BUILT_IN_FORMATIONS } from '@/lib/formations';
+import { generateId } from '@/lib/utils';
+import { plays as playsDb } from '@/lib/db/indexeddb';
+import type { Formation, Play, PlayerAssignment, CanvasState } from '@/types';
+
+const DEFAULT_FORMATION = BUILT_IN_FORMATIONS[0]; // Singleback
 
 export default function SketchPage() {
-  const [hasContent, setHasContent] = useState(false);
-  const { setCurrentMode } = useAppStore();
+  const { canvasTool, addPlay } = useAppStore();
+  const { clearHistory } = useHistoryStore();
 
-  const handleNewPlay = () => {
-    setHasContent(false);
-  };
+  // Play state
+  const [formation, setFormation] = useState<Formation>(DEFAULT_FORMATION);
+  const [assignments, setAssignments] = useState<PlayerAssignment[]>([]);
+  const [canvasState, setCanvasState] = useState<CanvasState>({
+    zoom: 1,
+    panX: 0,
+    panY: 0,
+    selectedIds: [],
+    tool: 'select',
+    isDrawing: false,
+  });
 
-  const handleSaveToPlaybook = () => {
-    setCurrentMode('playbook');
-  };
+  // Container sizing
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
+
+  // Save modal
+  const [saveModalOpen, setSaveModalOpen] = useState(false);
+  const [playName, setPlayName] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Build the current Play object
+  const currentPlay: Play = useMemo(
+    () => ({
+      id: 'sketch-draft',
+      name: 'Untitled Sketch',
+      formationId: formation.id,
+      assignments,
+      tags: [],
+      personnel: formation.personnel,
+      teamId: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }),
+    [formation.id, formation.personnel, assignments],
+  );
+
+  // Measure container and resize
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const updateSize = () => {
+      const rect = container.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        setDimensions({ width: Math.floor(rect.width), height: Math.floor(rect.height) });
+      }
+    };
+
+    updateSize();
+
+    const observer = new ResizeObserver(() => {
+      updateSize();
+    });
+    observer.observe(container);
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Handle formation change
+  const handleFormationChange = useCallback(
+    (formationId: string) => {
+      const found = BUILT_IN_FORMATIONS.find((f) => f.id === formationId);
+      if (found) {
+        setFormation(found);
+        setAssignments([]);
+        clearHistory();
+      }
+    },
+    [clearHistory],
+  );
+
+  // Handle New Play
+  const handleNewPlay = useCallback(() => {
+    setFormation(DEFAULT_FORMATION);
+    setAssignments([]);
+    setCanvasState({
+      zoom: 1,
+      panX: 0,
+      panY: 0,
+      selectedIds: [],
+      tool: 'select',
+      isDrawing: false,
+    });
+    clearHistory();
+  }, [clearHistory]);
+
+  // Handle Save to Playbook
+  const handleSaveToPlaybook = useCallback(() => {
+    setPlayName('');
+    setSaveModalOpen(true);
+  }, []);
+
+  const handleConfirmSave = useCallback(async () => {
+    if (!playName.trim()) return;
+    setIsSaving(true);
+    try {
+      const now = new Date().toISOString();
+      const newPlay: Play = {
+        id: generateId(),
+        name: playName.trim(),
+        formationId: formation.id,
+        assignments,
+        tags: [],
+        personnel: formation.personnel,
+        teamId: '',
+        createdAt: now,
+        updatedAt: now,
+      };
+      await playsDb.put(newPlay);
+      addPlay(newPlay);
+      setSaveModalOpen(false);
+      // Reset after saving
+      handleNewPlay();
+    } catch {
+      // Save error handled silently
+    } finally {
+      setIsSaving(false);
+    }
+  }, [playName, formation, assignments, addPlay, handleNewPlay]);
+
+  // Player select handler
+  const handlePlayerSelect = useCallback(
+    (playerId: string) => {
+      setCanvasState((prev) => ({
+        ...prev,
+        selectedIds: [playerId],
+      }));
+    },
+    [],
+  );
+
+  // Canvas change handler
+  const handleCanvasChange = useCallback(
+    (state: CanvasState) => {
+      setCanvasState(state);
+    },
+    [],
+  );
 
   return (
-    <div className="flex h-full flex-col">
-      {/* Toolbar */}
+    <div className="flex h-full flex-col" data-testid="sketch-page">
+      {/* Top toolbar */}
       <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-2 dark:border-zinc-800">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <h1 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
             Quick Sketch
           </h1>
+
+          {/* Formation selector */}
+          <select
+            value={formation.id}
+            onChange={(e) => handleFormationChange(e.target.value)}
+            className="rounded-md border border-zinc-300 bg-white px-2.5 py-1 text-xs font-medium text-zinc-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200"
+            data-testid="formation-selector"
+            aria-label="Select formation"
+          >
+            {BUILT_IN_FORMATIONS.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.name}
+              </option>
+            ))}
+          </select>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={handleNewPlay}>
+          <Button variant="ghost" size="sm" onClick={handleNewPlay} data-testid="new-play-btn">
             New Play
           </Button>
-          <Button variant="primary" size="sm" onClick={handleSaveToPlaybook}>
+          <Button variant="primary" size="sm" onClick={handleSaveToPlaybook} data-testid="save-playbook-btn">
             Save to Playbook
           </Button>
         </div>
       </div>
 
       {/* Canvas area */}
-      <div className="flex-1 relative bg-[#2d5a27] dark:bg-[#1a3d18]">
-        {!hasContent ? (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <EmptyState
-              title="Start sketching"
-              description="Click anywhere on the field to start drawing a play. Use the drawing tools to add routes, blocks, and assignments."
-              actionLabel="Start Drawing"
-              onAction={() => setHasContent(true)}
-              icon={
-                <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
-                </svg>
-              }
-              className="text-white [&_h3]:text-white [&_p]:text-white/70"
-            />
-          </div>
-        ) : (
-          /* Placeholder for PlayRenderer + DrawingTools integration */
-          <div className="flex h-full items-center justify-center">
-            <div className="rounded-lg bg-white/10 p-8 text-center text-white/70 backdrop-blur-sm">
-              <p className="text-sm">Canvas rendering area</p>
-              <p className="mt-1 text-xs">PlayRenderer and DrawingTools will be integrated here</p>
-            </div>
-          </div>
-        )}
+      <div className="relative flex-1 bg-[#2d5a27] dark:bg-[#1a3d18]" data-testid="canvas-area">
+        {/* Canvas container for measuring */}
+        <div ref={containerRef} className="absolute inset-0">
+          <PlayRenderer
+            play={currentPlay}
+            formation={formation}
+            mode="full"
+            width={dimensions.width}
+            height={dimensions.height}
+            interactive
+            onPlayerSelect={handlePlayerSelect}
+            onCanvasChange={handleCanvasChange}
+          />
+        </div>
 
-        {/* Field lines overlay (decorative) */}
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          {/* Yard lines */}
-          {Array.from({ length: 7 }).map((_, i) => (
-            <div
-              key={i}
-              className="absolute left-0 right-0 border-t border-white/10"
-              style={{ top: `${((i + 1) * 100) / 8}%` }}
-            />
-          ))}
-          {/* Hash marks */}
-          <div className="absolute top-0 bottom-0 left-1/3 border-l border-dashed border-white/5" />
-          <div className="absolute top-0 bottom-0 right-1/3 border-r border-dashed border-white/5" />
+        {/* Drawing tools overlaid on top-left */}
+        <div className="absolute left-3 top-3 z-10" data-testid="drawing-tools-container">
+          <DrawingTools orientation="vertical" />
         </div>
       </div>
+
+      {/* Save modal */}
+      <Modal open={saveModalOpen} onClose={() => setSaveModalOpen(false)} size="sm">
+        <ModalHeader>Save to Playbook</ModalHeader>
+        <ModalBody>
+          <label
+            htmlFor="play-name-input"
+            className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+          >
+            Play Name
+          </label>
+          <input
+            id="play-name-input"
+            type="text"
+            value={playName}
+            onChange={(e) => setPlayName(e.target.value)}
+            placeholder="e.g. HB Dive, Four Verts..."
+            className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+            data-testid="play-name-input"
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleConfirmSave();
+              }
+            }}
+          />
+        </ModalBody>
+        <ModalFooter>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSaveModalOpen(false)}
+            data-testid="cancel-save-btn"
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={handleConfirmSave}
+            disabled={!playName.trim()}
+            loading={isSaving}
+            data-testid="confirm-save-btn"
+          >
+            Save
+          </Button>
+        </ModalFooter>
+      </Modal>
     </div>
   );
 }

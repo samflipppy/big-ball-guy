@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { ToastContainer } from '@/components/ui/Toast';
+import { DarkModeProvider } from '@/components/ui/DarkModeProvider';
 
 const inter = Inter({
   variable: '--font-inter',
@@ -22,7 +23,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100`}>
-        {children}
+        <DarkModeProvider>
+          {children}
+        </DarkModeProvider>
         <ToastContainer />
       </body>
     </html>

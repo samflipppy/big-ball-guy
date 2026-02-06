@@ -1,6 +1,8 @@
 'use client';
 
 import { Sidebar } from '@/components/ui/Sidebar';
+import { DarkModeToggle } from '@/components/ui/DarkModeToggle';
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { useAppStore } from '@/stores/playStore';
 import { cn } from '@/lib/utils';
 
@@ -49,15 +51,18 @@ export default function AppLayout({
 
           <div className="flex-1" />
 
-          {/* Placeholder for header actions */}
+          {/* Header actions */}
           <div className="flex items-center gap-2">
+            <DarkModeToggle />
             <span className="text-xs text-zinc-400 dark:text-zinc-500">Playbook Pro</span>
           </div>
         </header>
 
         {/* Main content */}
         <main className="flex-1 overflow-auto">
-          {children}
+          <ErrorBoundary>
+            {children}
+          </ErrorBoundary>
         </main>
       </div>
     </div>
