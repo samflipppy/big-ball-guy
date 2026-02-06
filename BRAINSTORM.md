@@ -207,6 +207,176 @@ That's the demo that gets coaches excited. Everything else builds on top.
 - GridIron Studio
 - The Playsheet
 
+## UI/UX Philosophy: Zero Training Required
+
+The #1 design principle: **a coach who has never seen this app should be able to create a play in under 60 seconds on their first visit.** If it needs a tutorial, it's too complicated. Every decision below serves that goal.
+
+### 1. The Whiteboard Metaphor
+
+Coaches already know how to draw plays. They do it on whiteboards, napkins, and foggy bus windows. The entire UI should feel like a digital whiteboard, not a software application.
+
+- The field IS the app. When you open a new play, you see a field. That's it. No dashboards, no settings panels, no onboarding wizard.
+- Tap the field to place a player. Tap a player to draw their route. Done.
+- Two-finger draw (or click-drag) for freehand annotation — circle a gap, draw an arrow, scribble a note. Just like a dry-erase marker.
+- Undo/redo with simple swipe gestures or Ctrl+Z. Mistakes cost nothing.
+
+### 2. Progressive Disclosure — Show Less, Do More
+
+Never show the coach 50 buttons. Show them 3 things, and reveal more only when they need it.
+
+**Layer 0 — The Field (default view)**
+- Empty field. A subtle "+" button or "Tap to add players" hint. That's ALL they see.
+
+**Layer 1 — After adding players**
+- A small floating toolbar appears: Formation templates, Route tool, Blocking tool, Text label.
+- Tapping a player highlights it and shows contextual actions (draw route, set assignment, change label).
+
+**Layer 2 — Power features (only when they go looking)**
+- Route library, blocking scheme library, defensive overlays, tags, export options.
+- These live in a clean sidebar that slides in. Never forced on the user.
+
+**Layer 3 — Program management**
+- Playbook organization, scout cards, install sheets, team settings.
+- Accessed from a simple top nav. Completely invisible until needed.
+
+### 3. Tap-First, Touch-Native Design
+
+Coaches use iPads. A LOT. The entire interaction model should be designed for touch first, mouse second.
+
+- **Big tap targets** — player icons are large, easy to grab with a finger
+- **Gesture-based route drawing** — tap player, drag to draw the route, lift to finish. The line smooths and snaps automatically.
+- **Pinch to zoom** the field, two-finger pan to scroll
+- **Long-press** a player for a context menu (change position label, delete, duplicate)
+- **Swipe between plays** in a playbook like flipping pages
+- No right-click menus, no hover states that hide critical actions, no tiny toolbar icons
+
+### 4. Smart Defaults That Speak Football
+
+The app should know football. Out of the box, zero configuration:
+
+- **Default route tree pre-loaded** — Hitch (5yd), Slant, Out (8yd), Curl (12yd), Corner, Post, Go, Wheel, Flat, Angle, Seam. Coach can customize later, but they never HAVE to.
+- **Default formations pre-loaded** — Spread (2x2), Trips Right, I-Form, Single Back, Pistol, Empty, Goal Line. Tap one and 11 players appear in the right spots.
+- **Default fronts pre-loaded** — 4-3, 3-4, Nickel, Dime, Bear, 46. Same idea for the defensive side.
+- **Player labels default to football positions** — not "Player 1" but "X", "Z", "H", "Y", "F", "T", "G", "C". Coaches see their language instantly.
+- **When you draw a route, the app suggests what it is** — "Looks like a Corner route" with a small label. Coach can accept or rename. Builds their library passively.
+
+### 5. One-Tap Concept Assembly (The "Magic" UX)
+
+This is where we leapfrog every competitor. The flow:
+
+```
+[Pick Formation] → [Pick Concept] → Play is drawn. Done.
+```
+
+- Coach taps "New Play"
+- Sees a grid of their formations (visual thumbnails, not text lists). Taps "Trips Right."
+- 11 offensive players appear on the field in Trips Right alignment.
+- Bottom of screen shows concept cards: "Mesh", "Drive", "Smash", "Four Verts", "Inside Zone", "Counter", "Power"
+- Coach taps "Mesh" — routes auto-draw on the eligible receivers, blocking assignments auto-populate on the line.
+- Coach tweaks if needed (drag a route, change an assignment) or just saves.
+- **Total time: 3 taps and maybe 10 seconds.**
+
+Compare that to Pro Quick Draw: open Visio, load template, drag 11 stencils onto the field, manually draw every route and blocking arrow. 15-20 minutes.
+
+### 6. Visual Route Drawing with Auto-Clean
+
+When a coach draws a route freehand, it's going to be wobbly. The app should:
+
+- **Auto-smooth** the path into clean curves and straight segments
+- **Detect route breaks** — a sharp change in direction becomes a crisp cut (not a rounded curve)
+- **Snap to common depths** — if you draw to roughly 5 yards, it snaps to 5. Roughly 10-12, it snaps to the coach's curl depth. Subtle, not aggressive.
+- **Show a ghost line** while drawing so the coach sees the cleaned-up version in real-time
+- **Arrow heads auto-appear** at the end of the route
+
+The result: a coach scribbles a sloppy route with their finger and it comes out looking like a textbook diagram. That moment of "whoa" is what makes them tell another coach about it.
+
+### 7. Contextual Intelligence
+
+The app should feel like it understands the game:
+
+- **Place a RB behind the QB** → app suggests "Add pass pro assignment?" with one tap
+- **Draw 5 routes and no blocking** → subtle prompt: "Add protection?"
+- **Tag a play as "Red Zone"** → app auto-suggests goal line formations
+- **Import a 3-4 defense** → blocking rules auto-shift (Center IDs the nose, guard works to the backer)
+- **Create 5 plays vs Cover 3** → app offers "Generate scout card?" with one tap
+
+Never block the coach. Never force them through a wizard. Just quietly surface the next logical action.
+
+### 8. Instant Share — QR Code + Link
+
+After creating a play or playbook section:
+
+- **One-tap share** generates a mobile-friendly read-only link
+- **QR code** auto-generates — coach can project it in a meeting room, players scan with their phones
+- **Players see a clean mobile view** — swipe through plays, pinch to zoom, no account needed
+- **Practice script sharing** — share this week's install with the whole team in 5 seconds
+
+No "export to PDF, email it, hope they open it" workflow. Just scan and see.
+
+### 9. Dark Mode by Default (Coach Mode)
+
+Coaches work late. Film rooms are dark. The default theme should be:
+
+- **Dark background** with a clean green/white field
+- High contrast player icons and route lines
+- Easy on the eyes at 11 PM
+- Light mode available but dark is the default — it signals "this was built for you, not for an office worker"
+
+### 10. Offline-First PWA
+
+Coaches are on buses, in locker rooms, at practice fields with no WiFi:
+
+- **Works offline** — create and edit plays with no internet connection
+- **Auto-syncs** when back online
+- **Installable on iPad** home screen — feels like a native app
+- **Fast.** No loading spinners. Plays render instantly. The canvas is local-first.
+
+### 11. Animation / Play Simulation (Future, but plant the seed)
+
+A "Play" button on any play that:
+
+- Animates the routes and blocking assignments unfolding in real-time
+- Shows the timing of the play (3-step, 5-step, 7-step drop)
+- Lets coaches show players "here's what it looks like in motion"
+- This is a massive differentiator and demo-able feature
+
+### 12. Voice-to-Play (AI Feature, Future)
+
+Coach speaks: "Trips right, X on a post, Z on a dig, H shallow cross, Y check-release, F on a wheel"
+
+The app draws it. Coach tweaks if needed. This is the endgame UX — zero taps.
+
+### 13. Keyboard Shortcuts for Power Users
+
+For the OC sitting at a desk building the whole playbook:
+
+- `F` — new formation
+- `R` — route drawing mode
+- `B` — blocking mode
+- `D` — add defense overlay
+- `S` — save
+- `E` — export
+- `1-9` — quick-select formation templates
+- `Cmd+D` — duplicate play
+- `Cmd+Z/Y` — undo/redo
+- `Space` — play animation
+
+Not required to use the app. But power users will fly.
+
+### UX Principles Summary
+
+| Principle | What it means in practice |
+|---|---|
+| **Whiteboard-first** | The field is the UI. Everything else is secondary. |
+| **3-tap play creation** | Formation → Concept → Done. |
+| **Touch-native** | Designed for iPad fingers, not desktop mouse pointers. |
+| **Football-fluent** | Default labels, routes, formations speak coach language. |
+| **Progressive disclosure** | Simple on the surface, powerful underneath. |
+| **Auto-clean drawing** | Sloppy finger input → textbook diagram output. |
+| **Instant sharing** | QR code + link, no export/email/download dance. |
+| **Offline-first** | Works on the bus, at practice, in the film room. |
+| **Dark by default** | Built for late nights in the film room. |
+
 ## Next Steps
 
 1. Scaffold the Next.js project
