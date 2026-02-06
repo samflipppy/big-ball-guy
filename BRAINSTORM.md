@@ -970,6 +970,99 @@ The MASSIVE advantage we have is that our system is COMPOSABLE. PQD is just shap
 
 Their 3-hour Sunday becomes our 45-minute Sunday.
 
+## Scouting Intelligence Layer — The Play Diagram as a Game Planning Brain
+
+This is where we go from "better drawing tool" to "unfair competitive advantage." PQD's diagrams are just shapes. Our diagrams KNOW FOOTBALL. When a coach overlays their offense against an opponent's defense, the app doesn't just draw it — it helps the coach SEE the weaknesses.
+
+### Offensive Scouting Intelligence (vs Opponent Defense)
+
+When your plays are shown against an opponent's defensive look:
+
+**Visual Alerts on the Canvas:**
+- **Unblocked defenders** — any defender without a blocker assigned highlights in red/warning. "Nobody has the backside DE on this play vs their Over front."
+- **Numbers advantages** — badge showing "3v2 to the field" when you have a numbers mismatch at a formation. Coach instantly sees where to attack.
+- **Coverage windows** — when routes are drawn against a coverage shell, shade the open zones/holes. The dig route sits in the void between hook and curl defender in Cover 3 — highlight that window.
+- **Hot route triggers** — if a blitz leaves a receiver uncovered, flag it. "If they bring Alpha, your H is hot on the slant."
+- **Leverage mismatches** — "Their corner is aligned inside leverage on your X. Fade is open."
+
+**Defender Scouting Notes (tap any defender to add):**
+- Free-text notes: "Slow to react to motion", "#23 bites on play action every time", "FS cheats to trips side"
+- Tendency tags: "Run-first read", "Bails at snap in Cover 3", "Late to flat in zone"
+- Rating/grade: quick 1-5 grade on coverage ability, run support, blitz timing
+- These notes PERSIST on that defender across the entire game plan. Tag "#23" with notes once, see them every time #23 appears on a play.
+
+**Play-Level Scouting Notes:**
+- "This is our best play vs their base defense because the Sam is always late filling the B gap"
+- "If they stem to Under, check to Power instead"
+- Notes visible on the play in the game plan, on the call sheet (abbreviated), and in meeting deck mode
+
+### Defensive Scouting Intelligence (vs Opponent Offense)
+
+For defensive coaches scouting an opponent's offense:
+
+**Opponent Tendency Tracking:**
+- Tag opponent plays with tendencies: "Inside Zone 40% on 1st & 10 from 11 personnel"
+- Formation tells: "TE attached = 80% run. TE detached = 70% pass."
+- Down & distance tendencies: "3rd & 3-5: 60% RPO, 25% dropback, 15% run"
+- Personnel tendencies: "12 personnel = heavy run. 11 personnel = balanced."
+
+**Key Player Notes:**
+- "QB can't throw the deep out. Force everything inside the numbers."
+- "RB cuts backside on zone 90% of the time. Set the edge."
+- "#78 LT is weak vs speed rush. Send the edge."
+- These attach to specific players and show up whenever that player appears in a scouting diagram.
+
+**Weakness Highlighting on Opponent Plays:**
+- When drawing up an opponent's play, circle or highlight the weakness point
+- "The A-gap is open if the center goes to the backside combo"
+- "The flat is vacated when the RB blocks — throw hot to the flat"
+- Annotations that show up on scout cards for the defense
+
+### How This Works in the Data Model
+
+```typescript
+type ScoutingNote = {
+  id: string
+  gameplanId: string
+  type: 'player' | 'play' | 'formation' | 'tendency'
+  targetId: string           // defender jersey #, play id, formation id
+  content: string            // free text note
+  tags?: string[]            // "slow", "bites on PA", "weak coverage"
+  rating?: number            // 1-5 optional grade
+}
+
+type TendencyEntry = {
+  id: string
+  opponentId: string
+  situation: string          // "1st & 10", "3rd & Short", "Red Zone"
+  personnel: string          // "11", "12", "21"
+  formation?: string         // "Spread", "Trips", "I-Form"
+  playType: string           // "Inside Zone", "RPO", "Dropback", "Screen"
+  percentage: number         // 0-100
+  sampleSize: number         // how many plays this is based on
+  notes?: string
+}
+```
+
+### Why PQD Can Never Do This
+
+PQD's defensive player stencils are just shapes with a letter inside. They have no concept of:
+- What a "3-technique" means relative to the offensive line
+- Whether a defender is "blocked" or "unblocked"
+- What coverage responsibility a DB has
+- What a "numbers advantage" is
+- Player identity that persists across multiple diagrams
+
+Our tool knows that defender #23 is the field corner in a Cover 3 shell aligned at 7 yards with outside leverage on the X receiver. That's why we can surface insights they never will.
+
+### The Pitch
+
+This is the feature that makes a head coach say "holy shit" in the demo:
+
+> "Coach, you drew up your Mesh concept against their Cover 3. I can see that the H shallow cross has a clean window between their hook and curl drop. And by the way, your notes from film say their Will linebacker bites on play action — want to tag this as a play-action opportunity?"
+
+That's not a drawing tool. That's a coaching assistant.
+
 ## Next Steps
 
 1. Scaffold the Next.js project

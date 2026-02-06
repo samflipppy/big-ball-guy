@@ -1464,6 +1464,164 @@ Team-level customization:
 
 ---
 
+# Phase 7: Scouting Intelligence
+
+## Issue #59: Canvas-Level Scouting Alerts — Unblocked Defenders & Numbers Advantages
+
+**Labels:** `scouting`, `canvas`, `intelligence`
+**Milestone:** Phase 7 — Scouting Intelligence
+**Priority:** High
+
+**Description:**
+When a play is overlaid against a defensive front, the canvas should automatically highlight tactical alerts:
+
+- **Unblocked Defender Alert**: If blocking rules leave a defender unaccounted for, highlight that defender in red with a warning icon. Coach can tap to see "Unblocked — consider hot route or slide protection."
+- **Numbers Advantage/Disadvantage**: Count blockers vs rushers per side (left/right of center). Show green (advantage), yellow (even), red (disadvantage) indicators on each side.
+- **Run Fit Analysis**: For run plays, highlight which gaps are filled vs unfilled by the defense. Show arrows for where the defense is weak.
+
+All alerts are non-intrusive — subtle colored outlines and small icons that don't clutter the play view. Coach can toggle alerts on/off globally.
+
+**Acceptance Criteria:**
+- [ ] Automatic detection of unblocked defenders against current blocking scheme
+- [ ] Red highlight + warning icon on unblocked defender
+- [ ] Left/right numbers advantage indicator (green/yellow/red)
+- [ ] Run gap analysis overlay for run plays
+- [ ] Global toggle to show/hide all scouting alerts
+- [ ] Alerts update live as coach modifies blocking or defense
+- [ ] Performance: alerts calculate in <100ms
+
+---
+
+## Issue #60: Coverage Window Detection — Find the Soft Spots
+
+**Labels:** `scouting`, `canvas`, `intelligence`
+**Milestone:** Phase 7 — Scouting Intelligence
+**Priority:** High
+
+**Description:**
+When a coverage shell is applied (Cover 2, Cover 3, Cover 4, Man, etc.), the canvas should highlight coverage windows — the zones between defenders where receivers can find space:
+
+- **Zone Coverage**: Shade the gaps between zone defenders in a subtle highlight color. Larger gaps = brighter highlight. Coach can immediately see where the soft spots are.
+- **Man Coverage**: Show matchup lines from each defender to their assignment. Highlight favorable matchups (speed mismatch, size mismatch) if the coach has tagged player attributes.
+- **Route vs Coverage Overlay**: When routes are drawn over coverage, highlight where routes intersect soft zones. Show "high-percentage windows" where a receiver will be open against the called coverage.
+
+**Acceptance Criteria:**
+- [ ] Zone gap detection and visual shading for all standard coverages
+- [ ] Man coverage matchup lines
+- [ ] Route intersection with coverage windows highlighted
+- [ ] Coverage type selector (Cover 1-6, Man, custom)
+- [ ] Visual indicators for favorable/unfavorable matchups
+- [ ] Toggle coverage windows on/off independently of other alerts
+
+---
+
+## Issue #61: Defender & Player Scouting Notes
+
+**Labels:** `scouting`, `notes`, `game-planning`
+**Milestone:** Phase 7 — Scouting Intelligence
+**Priority:** High
+
+**Description:**
+Coaches should be able to attach scouting notes to any element on the canvas — individual defenders, offensive players, formations, or specific plays:
+
+- **Defender Notes**: Tap any defender icon → "Add Note" → free-text note with optional tags (e.g., "slow to recover", "bites on play-action", "weak tackler"). Notes persist across all plays in the game plan where that defender position appears.
+- **Play Notes**: Annotate any play with coaching notes ("They struggled with this in Q3 last year", "Run this on 2nd & medium").
+- **Formation Notes**: Notes on opponent tendencies from specific formations ("70% run from this formation", "Always motion to trips before passing").
+- **Visual Indicators**: Small note icon on any element that has notes. Tap to expand. Color-coded by sentiment (red = weakness to exploit, blue = strength to avoid, yellow = neutral observation).
+- **Note Search**: Global search across all notes in a game plan.
+
+**Acceptance Criteria:**
+- [ ] Tap-to-add notes on defender icons, plays, and formations
+- [ ] Free-text note entry with optional tags
+- [ ] Notes persist across all plays where that element appears
+- [ ] Visual note indicator icons on canvas elements
+- [ ] Color coding by note type (weakness/strength/neutral)
+- [ ] Global note search within game plan
+- [ ] Notes export with game plan printouts
+
+---
+
+## Issue #62: Opponent Tendency Tracking & Dashboard
+
+**Labels:** `scouting`, `analytics`, `game-planning`
+**Milestone:** Phase 7 — Scouting Intelligence
+**Priority:** Medium
+
+**Description:**
+A dedicated tendency tracking view where coaches can log and visualize opponent patterns:
+
+- **Tendency Entry**: Log entries by situation (down & distance, field zone, quarter, personnel). Record what the opponent ran — formation, play type, direction, result.
+- **Tendency Dashboard**: Visual breakdown showing:
+  - Run/pass ratio by down & distance (bar chart)
+  - Formation frequency (heat map or ranked list)
+  - Play direction tendencies (field diagram with arrows showing run direction frequency)
+  - Red zone tendencies
+  - 3rd down tendencies
+- **Smart Suggestions**: Based on logged tendencies, suggest plays from the coach's playbook that exploit the opponent's patterns. E.g., "Opponent runs 65% to the right on 1st & 10 — consider overloading left linebacker."
+- **Quick Entry Mode**: Rapid-fire entry during film review. Down, distance, formation, play type — 4 taps per entry.
+
+**Acceptance Criteria:**
+- [ ] Tendency entry form with situation, personnel, formation, play type
+- [ ] Quick entry mode for rapid film review logging
+- [ ] Run/pass ratio visualization by situation
+- [ ] Formation frequency breakdown
+- [ ] Play direction heat map on field diagram
+- [ ] Red zone and 3rd down tendency views
+- [ ] Smart play suggestions based on tendencies vs coach's playbook
+- [ ] Import tendencies from CSV (for coaches with existing spreadsheets)
+
+---
+
+## Issue #63: Weakness Highlighting & Exploit Mode
+
+**Labels:** `scouting`, `canvas`, `game-planning`
+**Milestone:** Phase 7 — Scouting Intelligence
+**Priority:** Medium
+
+**Description:**
+A special "Exploit Mode" toggle in the game plan builder that highlights known weaknesses directly on the canvas:
+
+- **Weakness Tags**: When scouting notes contain weakness tags, those elements glow red on the canvas. A weak cornerback shows as a red-highlighted player. A formation the opponent struggles against shows as a green-highlighted formation option.
+- **Exploit Suggestions Panel**: Side panel showing "Top Exploits" — a ranked list of the biggest mismatches or weaknesses found from scouting notes and tendencies. Each exploit links directly to relevant plays in the coach's playbook.
+- **Game Plan Auto-Fill**: One-tap action: "Build game plan from scouting data." Auto-populates situation slots with plays that exploit logged weaknesses. Coach reviews and adjusts — it's a starting point, not a replacement.
+- **Confidence Score**: Each exploit gets a confidence rating based on sample size. "3 games of data" vs "1 game" — helps coach weigh how much to trust the tendency.
+
+**Acceptance Criteria:**
+- [ ] Exploit Mode toggle in game plan view
+- [ ] Weakness-tagged elements highlighted on canvas
+- [ ] Exploit Suggestions panel with ranked mismatches
+- [ ] Each exploit links to relevant plays in playbook
+- [ ] One-tap game plan auto-fill from scouting data
+- [ ] Confidence scores based on data sample size
+- [ ] Coach can dismiss/override any suggestion
+
+---
+
+## Issue #64: Hot Route Triggers & Automatic Adjustments
+
+**Labels:** `scouting`, `canvas`, `play-design`
+**Milestone:** Phase 7 — Scouting Intelligence
+**Priority:** Medium
+
+**Description:**
+Allow coaches to define IF/THEN rules on plays that automatically show adjustments based on what the defense shows:
+
+- **Hot Route Rules**: "IF defense shows blitz from the weak side → THEN slot receiver runs hot slant instead of dig." Coach defines the trigger (defensive look) and the adjustment (route change, blocking change, or audible).
+- **Visual on Canvas**: When a hot route trigger is defined, the canvas shows the base route in solid and the hot route in dashed. Tapping the trigger condition toggles between views.
+- **Pre-snap Read Checklist**: For each play, auto-generate a "pre-snap read" checklist based on defined triggers. This becomes a teaching tool — coach can show players exactly what to look for.
+- **Multiple Triggers Per Play**: A play can have multiple IF/THEN rules for different defensive looks.
+
+**Acceptance Criteria:**
+- [ ] Define hot route trigger conditions (defensive look)
+- [ ] Define adjustment actions (route change, blocking change, audible)
+- [ ] Base route shown solid, hot route shown dashed on same canvas
+- [ ] Tap to toggle between base and adjusted view
+- [ ] Pre-snap read checklist auto-generated from triggers
+- [ ] Multiple triggers per play supported
+- [ ] Hot routes included in player distribution exports (wristbands show both)
+
+---
+
 ## Issue Summary
 
 | Phase | Issue Count | Focus |
@@ -1475,5 +1633,6 @@ Team-level customization:
 | Phase 4: Game Planning | #30-35 | Game plan, defense overlay, ID chart, nine-box |
 | Phase 5: Output | #36-44 | Call sheet, wristband, practice, scout, share |
 | Phase 6: Future | #45-50 | Animation, voice, collab, Hudl, quiz, wizard |
+| Phase 7: Scouting Intelligence | #59-64 | Alerts, coverage windows, notes, tendencies, exploits, hot routes |
 | Infrastructure | #51-58 | Dark mode, responsive, PWA, shortcuts, print |
-| **Total** | **58 issues** | |
+| **Total** | **64 issues** | |
