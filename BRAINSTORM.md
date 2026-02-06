@@ -778,6 +778,198 @@ Phase 5: Output
 
 Phase 1 is the hard work. Phases 2-5 get progressively easier because every new mode just composes existing components in a new layout.
 
+## Competitive Analysis: Pro Quick Draw In-Depth (from coaching tutorial video)
+
+Breaking down the ACTUAL coach workflow from a PQD game planning tutorial. This reveals the real day-to-day usage patterns and where we can destroy them.
+
+### Their Workflow (Step by Step)
+
+**Step 1: Defensive Identification Chart**
+- Coach watches film of the opponent
+- Opens a PQD template with their formation drawn up
+- Manually drags defensive player stencils to show how the opponent aligns to EACH of their formations
+- Labels each defender with their jersey number (#11 at FS, etc.)
+- Notes the front name (Over, Under, Stack, etc.)
+- Does this for ~10 formations they plan to use that week
+- Also picks their 5 best plays per formation vs that defense (strong run, weak run, RPO, dropback, screen)
+- These 5 go on the call sheet
+
+**Step 2: Run Game Install**
+- Takes each run concept (Inside Zone, Power, Counter, etc.)
+- Draws it up vs every front they might see (3-3 Stack, Over, Under, etc.)
+- Shows blocking assignments for each front variation
+- Also shows adjustments for blitzes (e.g., center peels for Mike A-gap blitz)
+- KEY QUOTE: "take an hour in the offseason just make these drawings and it's going to be set for the whole season"
+- This is the ONE-TIME offseason investment. Once drawn, just click to populate during the season.
+- KEY QUOTE: "my game planning process went from six to seven hours on a Sunday to now like 3 hours on a Sunday"
+
+**Step 3: Pass Game Install**
+- Two-panel template: play diagram on top, video clip on bottom
+- Coach pairs each pass concept with an NFL/college film clip showing the same concept
+- KEY QUOTE: "they love NFL clips they love college clips they love looking on Sunday and seeing hey like this is something that we ran this week because the Detroit Lions ran it"
+- Hudl integration: can pull clips from their own Hudl film library into PQD (paid add-on)
+- Can export the full presentation BACK to Hudl so it's available on the school computer
+
+**Step 4: Nine-Box Opponent Summary (what players actually see)**
+- Simple 3x3 grid:
+  - Row 1: Top 3 defensive FRONTS they'll see
+  - Row 2: Top 3 BLITZES they'll see
+  - Row 3: Top 3 COVERAGES they'll see (vs a specific formation)
+- Coach clicks pre-made defensive templates to populate each cell
+- Done in ~45 seconds once the library is built
+- KEY QUOTE: "there's no sense of me trying to go over six or seven different blitzes... just show them the top three that they ran more than three or four times"
+- This is projected in the team meeting AND sent to players' phones
+- The philosophy: don't overwhelm kids, just show them the 3 things that matter
+
+### Where PQD Actually Has Strengths
+
+Be honest about what they do well:
+
+1. **Offseason-once, use-all-season workflow.** Once the coach draws Inside Zone vs every front, it's saved forever. Click to populate during the season. This is genuinely fast.
+2. **Coaches already know PowerPoint.** Zero learning curve for the container. They've used PPT since elementary school. This is a REAL advantage we have to overcome.
+3. **Hudl integration.** Two-way sync with video. Pull clips in, export presentations out. Video + diagrams in one place is powerful for install meetings.
+4. **Template library.** Pre-made templates for defensive ID charts, run installs, pass installs, nine-box, scout cards. Coach picks a template, fills it in.
+5. **File-based simplicity.** Each diagram is its own file. No database, no sync issues, no "where did my data go." It's just files in folders. Coaches understand files.
+
+### Where PQD Is Weak (and where we DESTROY them)
+
+1. **Every defensive look is a manual redraw.**
+   - PQD: Coach drags stencils to create "Inside Zone vs Over Front." Then drags stencils again for "Inside Zone vs Under Front." And again for "Inside Zone vs 3-3 Stack." Each is a separate file.
+   - **Us:** Coach defines Inside Zone blocking rules ONCE (PST: base, PSG: combo to Mike, etc.). Select a front → blocking auto-adjusts. One concept, infinite fronts, zero redrawing.
+
+2. **The Defensive ID chart is fully manual.**
+   - PQD: Coach watches film, then manually places every defender on the field for each formation.
+   - **Us:** Coach selects "Opponent runs 4-3 Over" and "My formation is Trips Right" → defenders auto-populate in the correct alignment. Coach just tweaks if needed and adds jersey numbers.
+
+3. **No intelligence about the game.**
+   - PQD: It's shapes on a slide. The tool doesn't know a 3-tech from a nose.
+   - **Us:** The tool understands alignments, gap assignments, coverage responsibilities. It can auto-suggest blocking adjustments when the front changes.
+
+4. **The "best 5 plays" selection is manual and disconnected.**
+   - PQD: Coach manually types/picks their 5 favorite plays per formation. No connection to the actual playbook.
+   - **Us:** The playbook is tagged (Inside Zone, RPO, dropback, screen, etc.). Coach says "show me my best plays vs 4-3 Over" and the system filters automatically. Drag the ones you like into the game plan.
+
+5. **The nine-box is fast to FILL but slow to BUILD.**
+   - PQD: The 45-second demo works because the coach spent hours in the offseason building every defensive front template. The library construction is the hard part.
+   - **Us:** Ship with a complete default library of fronts, blitzes, and coverages. Coach can customize, but they don't HAVE to. Day 1 they can build a nine-box without any offseason setup.
+
+6. **No concept of a "game plan" as a first-class object.**
+   - PQD: It's just PowerPoint slides organized in folders. There's no data model connecting "this is my game plan for Week 3 vs Lincoln."
+   - **Us:** A game plan IS a thing. It references plays, has situation slots, tracks an opponent, generates call sheets and wristbands automatically.
+
+7. **Video integration is a paid add-on.**
+   - PQD: Hudl integration costs extra on top of the base package.
+   - **Us:** Embed video links (YouTube, Hudl share links, uploaded clips) natively. Free tier gets YouTube/link embeds. Pro tier gets direct Hudl integration.
+
+8. **Each diagram is an island.**
+   - PQD: Change your Inside Zone blocking scheme? You have to update EVERY file that contains Inside Zone. There's no linking.
+   - **Us:** Change the Inside Zone scheme in your library → every play using Inside Zone updates automatically. Change a formation alignment → every play using that formation updates.
+
+9. **PowerPoint is the ceiling.**
+   - No animation. No real-time collaboration. No mobile. No offline. No QR sharing. No position-filtered player views. No auto-generated call sheets. They can never build these features because the platform is PowerPoint.
+
+### Features We Need to Add (Learned from PQD)
+
+These are workflows the video revealed that our brainstorm was MISSING or underemphasizing:
+
+#### 1. Defensive Identification View (NEW — Critical)
+
+A dedicated screen for the weekly "how does this opponent align to our stuff?" workflow:
+
+- Select one of YOUR formations (e.g., Trips Right)
+- Select the opponent's defense (e.g., 4-3 Over Cover 3)
+- Your formation + their defense render on the field automatically
+- Coach adds jersey numbers to defensive players (tap player → type #11)
+- Coach notes the front name, coverage, any unusual alignments
+- Repeat for each formation in your game plan
+- **Output:** a "Defensive ID Sheet" — printable, shareable, one page per formation showing how the opponent will line up
+
+PQD makes the coach drag every defender manually. We auto-populate and let them tweak.
+
+#### 2. Concept × Front Matrix (NEW — Killer Feature)
+
+A matrix view that shows one offensive concept against EVERY defensive front:
+
+```
+              │ 4-3 Over │ 4-3 Under │ 3-3 Stack │ Nickel │ Bear │
+Inside Zone   │  [play]  │  [play]   │  [play]   │ [play] │[play]│
+Power         │  [play]  │  [play]   │  [play]   │ [play] │[play]│
+Counter       │  [play]  │  [play]   │  [play]   │ [play] │[play]│
+```
+
+- Each cell is a PlayRenderer showing the concept with blocking adjusted for that specific front
+- Because blocking schemes are rule-based, most cells auto-generate
+- Coach reviews and tweaks only the edge cases
+- This is the offseason build-out that PQD coaches spend hours on — we do it in minutes
+- This matrix IS the run game install. Print it and you have a wall poster for the meeting room.
+
+#### 3. "Top 5 Plays" Per Formation vs Defense (NEW)
+
+When viewing a Defensive ID chart (formation + opponent defense):
+- Sidebar shows plays from the playbook that use this formation
+- Filterable by category: strong run, weak run, RPO, dropback, screen
+- Coach taps to pin their top 5 (or however many)
+- These pinned plays auto-flow to the game plan and call sheet
+- PQD makes coaches manually pick and type these. We make it a tap-and-filter workflow.
+
+#### 4. Nine-Box Opponent Summary (NEW — Player-Facing)
+
+A simple 3×3 grid for the team meeting:
+- Row 1: Top 3 fronts (auto-suggested from Defensive ID work, or manually picked)
+- Row 2: Top 3 blitzes
+- Row 3: Top 3 coverages
+- Each cell is a clean defensive diagram from the library
+- One-tap generation: "Build nine-box from this week's game plan"
+- Shareable via QR code to players' phones
+- The philosophy: LESS is more. Help the coach distill, not overload.
+
+#### 5. Video Clip Embedding (NEW — Install Meetings)
+
+For pass game installs and any teaching moment:
+- Attach a video clip to any play (YouTube link, Hudl link, uploaded MP4)
+- Play diagram on top, video below — same layout PQD uses because it works
+- In meeting deck mode, coach shows the diagram then taps play on the video
+- "This is Mesh concept. Here's the Lions running it last Sunday."
+- Players connect the X's and O's to real football instantly
+- Phase 1: YouTube/link embeds (free). Phase 2: Hudl API integration.
+
+#### 6. Offseason Setup Wizard (Optional, Non-Blocking)
+
+PQD's strength is the offseason investment paying off all season. We should make that investment EASIER:
+
+- "Build Your System" — a guided (but optional) flow:
+  1. Pick your base formations (from defaults, customize if needed)
+  2. Pick your run concepts and define blocking rules
+  3. Pick your pass concepts and define route combos
+  4. The matrix auto-generates all combinations
+- This replaces the hours of manual drawing in PQD
+- But it's OPTIONAL — coach can skip this entirely and just use Quick Sketch
+- The payoff: once done, the 3-tap play creation and auto-blocking are unlocked
+
+### Can We Beat PQD? Honest Assessment
+
+| Workflow | PQD | Us | Verdict |
+|---|---|---|---|
+| Offseason play drawing | Manual drag, save as file, ~1 hour | Define rules, auto-generate matrix, ~15 min | **We win big** |
+| Defensive ID chart | Manual drag defenders per formation | Auto-populate, tap to tweak | **We win** |
+| Run game install | Click pre-drawn files into template | Concept × Front matrix auto-generates | **We win big** |
+| Pass game install + video | Diagram + Hudl clip in template | Diagram + embedded video link | **Tie (until Hudl API)** |
+| Nine-box opponent summary | Click pre-made defensive templates, ~45 sec | Auto-suggest from game plan, ~15 sec | **We win** |
+| Call sheet generation | Manual PowerPoint layout | Auto-generated from game plan | **We win big** |
+| Weekly game plan time | ~3 hours (down from 6-7 pre-PQD) | Target: under 1 hour | **We win if we deliver** |
+| Learning curve | "It's just PowerPoint" | Must be as intuitive as drawing on a whiteboard | **PQD wins (for now)** |
+| Hudl integration | Built-in (paid add-on) | Phase 2 | **PQD wins (for now)** |
+| Price | Hidden, requires Visio OR PowerPoint license | Free tier + $15/mo | **We win** |
+| Platform | Windows desktop only | Web + iPad + any device | **We win** |
+| Collaboration | Shared drive (manual) | Real-time multiplayer | **We win** |
+| Mobile/tablet | None | Touch-native, offline PWA | **We win** |
+
+**Bottom line: YES, we can beat them.** The only two areas where PQD currently wins are (1) the familiarity of PowerPoint and (2) Hudl integration. We overcome #1 with dead-simple UX (the whiteboard metaphor). We overcome #2 in Phase 2 with a Hudl API integration.
+
+The MASSIVE advantage we have is that our system is COMPOSABLE. PQD is just shapes on slides — every diagram is an island. In our tool, change a blocking rule once and it ripples through every play, every game plan, every call sheet. That alone saves coaches HOURS every week.
+
+Their 3-hour Sunday becomes our 45-minute Sunday.
+
 ## Next Steps
 
 1. Scaffold the Next.js project
