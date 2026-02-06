@@ -89,7 +89,7 @@ function hasAccessibleName(el: HTMLElement): boolean {
   // aria-labelledby → referenced element must exist and have text
   const labelledBy = el.getAttribute('aria-labelledby');
   if (labelledBy) {
-    const ref = el.ownerDocument.getElementById(labelledBy);
+    const ref = findElementById(el, labelledBy);
     if (ref && ref.textContent?.trim()) return true;
   }
 
@@ -102,12 +102,27 @@ function hasAccessibleName(el: HTMLElement): boolean {
   // <label> association for form controls
   if (el instanceof HTMLInputElement || el instanceof HTMLSelectElement || el instanceof HTMLTextAreaElement) {
     if (el.id) {
-      const label = el.ownerDocument.querySelector<HTMLLabelElement>(`label[for="${el.id}"]`);
+      const root = getTreeRoot(el);
+      const label = root.querySelector<HTMLLabelElement>(`label[for="${el.id}"]`);
       if (label && label.textContent?.trim()) return true;
     }
   }
 
   return false;
+}
+
+/** Walk up to the root of the element's tree (handles detached DOM subtrees). */
+function getTreeRoot(el: HTMLElement): HTMLElement {
+  let root: HTMLElement = el;
+  while (root.parentElement) root = root.parentElement;
+  return root;
+}
+
+/** Find an element by ID, searching both the document and the local tree root. */
+function findElementById(el: HTMLElement, id: string): HTMLElement | null {
+  const fromDoc = el.ownerDocument.getElementById(id);
+  if (fromDoc) return fromDoc;
+  return getTreeRoot(el).querySelector<HTMLElement>(`[id="${id}"]`);
 }
 
 // ---------------------------------------------------------------------------
@@ -128,7 +143,7 @@ export function checkColorContrast(
   const violations: A11yViolation[] = [];
   const ratio = contrastRatio(fg, bg);
 
-  const isLargeText = fontSize >= 18 || fontSize >= 14; // simplified large-text threshold
+  const isLargeText = fontSize >= 18; // simplified large-text threshold (WCAG: 18pt or 14pt bold)
   const aaThreshold = isLargeText ? 3.0 : 4.5;
   const aaaThreshold = isLargeText ? 4.5 : 7.0;
 
