@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
 import type { Play, Formation } from '@/types';
@@ -19,37 +19,34 @@ vi.mock('@/lib/export', () => ({
   downloadBlob: (...args: any[]) => mockDownloadBlob(...args),
 }));
 
-// Mock HTMLCanvasElement.getContext for the preview canvas
 beforeEach(() => {
   vi.clearAllMocks();
 
-  const origCreateElement = document.createElement.bind(document);
-  vi.spyOn(document, 'createElement').mockImplementation((tag: string, options?: any) => {
-    const el = origCreateElement(tag, options);
-    if (tag === 'canvas') {
-      (el as any).getContext = vi.fn().mockReturnValue({
-        fillStyle: '',
-        strokeStyle: '',
-        lineWidth: 1,
-        font: '',
-        textAlign: 'start',
-        textBaseline: 'alphabetic',
-        globalAlpha: 1,
-        fillRect: vi.fn(),
-        clearRect: vi.fn(),
-        beginPath: vi.fn(),
-        moveTo: vi.fn(),
-        lineTo: vi.fn(),
-        arc: vi.fn(),
-        fill: vi.fn(),
-        stroke: vi.fn(),
-        fillText: vi.fn(),
-        setLineDash: vi.fn(),
-        closePath: vi.fn(),
-      });
-    }
-    return el;
-  });
+  // Mock HTMLCanvasElement.prototype.getContext for the preview canvas
+  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
+    fillStyle: '',
+    strokeStyle: '',
+    lineWidth: 1,
+    font: '',
+    textAlign: 'start',
+    textBaseline: 'alphabetic',
+    globalAlpha: 1,
+    fillRect: vi.fn(),
+    clearRect: vi.fn(),
+    beginPath: vi.fn(),
+    moveTo: vi.fn(),
+    lineTo: vi.fn(),
+    arc: vi.fn(),
+    fill: vi.fn(),
+    stroke: vi.fn(),
+    fillText: vi.fn(),
+    setLineDash: vi.fn(),
+    closePath: vi.fn(),
+  } as any);
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 import ExportDialog from '@/components/playbook/ExportDialog';

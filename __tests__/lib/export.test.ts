@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { Play, Formation } from '@/types';
 
 // ============================================================
@@ -61,8 +61,6 @@ const makePlay = (overrides: Partial<Play> = {}): Play => ({
 // Mock canvas & DOM APIs for jsdom
 // ============================================================
 
-// jsdom does not ship a real Canvas implementation, so we mock
-// HTMLCanvasElement.prototype.getContext and toBlob.
 const mockContext2d = {
   fillStyle: '',
   strokeStyle: '',
@@ -89,34 +87,34 @@ const mockContext2d = {
   restore: vi.fn(),
 };
 
-beforeEach(() => {
-  vi.restoreAllMocks();
+// Build a fake PNG blob that has a working arrayBuffer()
+function makeFakePngBlob(): Blob {
+  const data = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]); // PNG header
+  return new Blob([data], { type: 'image/png' });
+}
 
-  // Ensure createElement('canvas') returns an element with our mock
-  const origCreateElement = document.createElement.bind(document);
-  vi.spyOn(document, 'createElement').mockImplementation((tag: string, options?: any) => {
-    const el = origCreateElement(tag, options);
-    if (tag === 'canvas') {
-      (el as any).getContext = vi.fn().mockReturnValue(mockContext2d);
-      (el as any).toBlob = vi.fn((cb: (b: Blob | null) => void) => {
-        // Return a minimal PNG-like blob
-        cb(new Blob(['fake-png-data'], { type: 'image/png' }));
-      });
-    }
-    return el;
+beforeEach(() => {
+  vi.clearAllMocks();
+
+  // Mock HTMLCanvasElement.prototype methods — avoids createElement recursion
+  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(mockContext2d as any);
+
+  vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation(function (
+    this: HTMLCanvasElement,
+    cb: BlobCallback,
+    _type?: string,
+    _quality?: number,
+  ) {
+    cb(makeFakePngBlob());
   });
 
-  // Mock URL.createObjectURL / revokeObjectURL for downloadBlob
-  if (!window.URL.createObjectURL) {
-    (window.URL as any).createObjectURL = vi.fn().mockReturnValue('blob:mock-url');
-  } else {
-    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-url');
-  }
-  if (!window.URL.revokeObjectURL) {
-    (window.URL as any).revokeObjectURL = vi.fn();
-  } else {
-    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
-  }
+  // Mock URL methods for downloadBlob
+  vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-url');
+  vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 // ============================================================
@@ -141,7 +139,6 @@ describe('export utilities', () => {
       });
 
       expect(blob).toBeInstanceOf(Blob);
-      // The canvas was created and getContext was called
       expect(mockContext2d.fillRect).toHaveBeenCalled();
     });
 
@@ -162,8 +159,7 @@ describe('export utilities', () => {
       });
 
       expect(blob).toBeInstanceOf(Blob);
-      // Should have drawn more players (offense + defense)
-      // fillRect is called for field bg + DL squares
+      // DL squares are drawn via fillRect
       expect(mockContext2d.fillRect).toHaveBeenCalled();
     });
 
@@ -200,7 +196,7 @@ describe('export utilities', () => {
 
       expect(blobLetter).toBeInstanceOf(Blob);
       expect(blobA4).toBeInstanceOf(Blob);
-      // A4 and Letter have different dimensions so bytes differ
+      // A4 and Letter have different page dimensions so PDF bytes differ
       expect(blobLetter.size).not.toBe(blobA4.size);
     });
   });
@@ -234,7 +230,6 @@ describe('export utilities', () => {
     it('throws when no valid plays exist', async () => {
       const { exportPlaybookAsPdf } = await import('@/lib/export');
 
-      // Play references a formation that doesn't exist in the map
       const plays = [makePlay({ formationId: 'nonexistent' })];
 
       await expect(exportPlaybookAsPdf(plays, [])).rejects.toThrow('No valid plays to export');
@@ -244,28 +239,15 @@ describe('export utilities', () => {
   describe('downloadBlob', () => {
     it('creates an anchor element and triggers click', async () => {
       const { downloadBlob } = await import('@/lib/export');
-      const clickSpy = vi.fn();
 
-      const origCreateElement = document.createElement.bind(document);
-      vi.spyOn(document, 'createElement').mockImplementation((tag: string, options?: any) => {
-        const el = origCreateElement(tag, options);
-        if (tag === 'a') {
-          vi.spyOn(el, 'click').mockImplementation(clickSpy);
-        }
-        // Keep canvas mocking too
-        if (tag === 'canvas') {
-          (el as any).getContext = vi.fn().mockReturnValue(mockContext2d);
-          (el as any).toBlob = vi.fn((cb: (b: Blob | null) => void) => {
-            cb(new Blob(['fake'], { type: 'image/png' }));
-          });
-        }
-        return el;
-      });
+      const clickSpy = vi.fn();
+      vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(clickSpy);
 
       const blob = new Blob(['test'], { type: 'text/plain' });
       downloadBlob(blob, 'test.txt');
 
       expect(clickSpy).toHaveBeenCalledOnce();
+      expect(URL.createObjectURL).toHaveBeenCalledWith(blob);
     });
   });
 });

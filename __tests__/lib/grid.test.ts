@@ -37,7 +37,9 @@ describe('snapToGrid()', () => {
 
   it('works with grid size of 15', () => {
     const result = snapToGrid({ x: 22, y: 38 }, 15);
-    expect(result).toEqual({ x: 30, y: 45 });
+    // 22 / 15 = 1.47 -> rounds to 1 -> 1 * 15 = 15
+    // 38 / 15 = 2.53 -> rounds to 3 -> 3 * 15 = 45
+    expect(result).toEqual({ x: 15, y: 45 });
   });
 
   it('works with grid size of 20', () => {

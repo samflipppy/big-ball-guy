@@ -579,13 +579,18 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
             )}
           </div>
           <div>
-            {currentStep < TOTAL_STEPS - 2 && (
+            {currentStep < 2 && (
               <Button onClick={goNext} data-testid="next-button">
                 {currentStep === 0 ? 'Get Started' : 'Next'}
               </Button>
             )}
-            {currentStep === TOTAL_STEPS - 2 && (
+            {currentStep === 2 && (
               <Button onClick={handleStepThreeNext} data-testid="next-button">
+                Next
+              </Button>
+            )}
+            {currentStep === 3 && (
+              <Button onClick={goNext} data-testid="next-button">
                 Next
               </Button>
             )}

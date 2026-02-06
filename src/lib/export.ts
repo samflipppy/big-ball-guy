@@ -699,7 +699,13 @@ async function renderPlayToPngData(
     );
   });
 
-  const arrayBuffer = await blob.arrayBuffer();
+  // Use FileReader for broader compatibility (jsdom, older browsers)
+  const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as ArrayBuffer);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsArrayBuffer(blob);
+  });
   return new Uint8Array(arrayBuffer);
 }
 
