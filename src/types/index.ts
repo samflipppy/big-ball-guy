@@ -124,6 +124,7 @@ export interface BlockingScheme {
   id: string;
   name: string;
   type: 'run' | 'pass';
+  description: string;
   rules: BlockingRule[];
   tags: string[];
   teamId: TeamId;

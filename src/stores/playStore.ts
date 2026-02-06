@@ -68,6 +68,14 @@ interface AppStore {
   darkMode: boolean;
   canvasTool: CanvasTool;
 
+  // Grid settings
+  gridEnabled: boolean;
+  gridSize: number;
+  snapToGridEnabled: boolean;
+  showYardNumbers: boolean;
+  showHashMarks: boolean;
+  showPlayerLabels: boolean;
+
   // In-memory caches (loaded from IndexedDB)
   plays: Play[];
   formations: Formation[];
@@ -81,6 +89,14 @@ interface AppStore {
   toggleSidebar: () => void;
   toggleDarkMode: () => void;
   setCanvasTool: (tool: CanvasTool) => void;
+
+  // Grid actions
+  setGridEnabled: (enabled: boolean) => void;
+  setGridSize: (size: number) => void;
+  setSnapToGridEnabled: (enabled: boolean) => void;
+  setShowYardNumbers: (show: boolean) => void;
+  setShowHashMarks: (show: boolean) => void;
+  setShowPlayerLabels: (show: boolean) => void;
 
   // Data actions
   setPlays: (plays: Play[]) => void;
@@ -101,6 +117,13 @@ export const useAppStore = create<AppStore>((set) => ({
   darkMode: false,
   canvasTool: 'select',
 
+  gridEnabled: false,
+  gridSize: 10,
+  snapToGridEnabled: false,
+  showYardNumbers: true,
+  showHashMarks: true,
+  showPlayerLabels: true,
+
   plays: [],
   formations: [],
   concepts: [],
@@ -112,6 +135,13 @@ export const useAppStore = create<AppStore>((set) => ({
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
   toggleDarkMode: () => set((s) => ({ darkMode: !s.darkMode })),
   setCanvasTool: (tool) => set({ canvasTool: tool }),
+
+  setGridEnabled: (enabled) => set({ gridEnabled: enabled }),
+  setGridSize: (size) => set({ gridSize: size }),
+  setSnapToGridEnabled: (enabled) => set({ snapToGridEnabled: enabled }),
+  setShowYardNumbers: (show) => set({ showYardNumbers: show }),
+  setShowHashMarks: (show) => set({ showHashMarks: show }),
+  setShowPlayerLabels: (show) => set({ showPlayerLabels: show }),
 
   setPlays: (plays) => set({ plays }),
   addPlay: (play) => set((s) => ({ plays: [...s.plays, play] })),
