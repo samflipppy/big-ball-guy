@@ -61,7 +61,7 @@ export function AuthForm({ mode, onSubmit, loading, error }: AuthFormProps) {
   const displayError = validationError || error;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={handleSubmit} noValidate className="space-y-5">
       {displayError && (
         <div
           role="alert"
