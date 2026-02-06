@@ -4,6 +4,7 @@ import { Sidebar } from '@/components/ui/Sidebar';
 import { DarkModeToggle } from '@/components/ui/DarkModeToggle';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { CommandPalette } from '@/components/ui/CommandPalette';
+import { OfflineIndicator } from '@/components/ui/OfflineIndicator';
 import { useAppStore } from '@/stores/playStore';
 import { cn } from '@/lib/utils';
 
@@ -67,6 +68,8 @@ export default function AppLayout({
           </ErrorBoundary>
         </main>
       </div>
+
+      <OfflineIndicator />
     </div>
   );
 }
