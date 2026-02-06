@@ -1,6 +1,26 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { BackupData } from '@/lib/db/backup';
 
+const ALL_STORE_NAMES = [
+  'plays',
+  'formations',
+  'concepts',
+  'gameplans',
+  'practiceScripts',
+  'blockingSchemes',
+  'scoutingNotes',
+  'folders',
+];
+
+/** Helper: clear all main stores used by the backup module. */
+async function clearAllStores() {
+  const { getDB } = await import('@/lib/db/indexeddb');
+  const db = await getDB();
+  for (const store of ALL_STORE_NAMES) {
+    await db.clear(store);
+  }
+}
+
 describe('backup', () => {
   beforeEach(() => {
     vi.resetModules();
@@ -10,6 +30,7 @@ describe('backup', () => {
     it('should export all stores to a BackupData structure', async () => {
       const { dbPut } = await import('@/lib/db/indexeddb');
       const { createBackup } = await import('@/lib/db/backup');
+      await clearAllStores();
 
       await dbPut(
         'plays',
@@ -34,21 +55,11 @@ describe('backup', () => {
     it('should include all known store names even when empty', async () => {
       await import('@/lib/db/indexeddb');
       const { createBackup } = await import('@/lib/db/backup');
+      await clearAllStores();
 
       const backup = await createBackup();
 
-      const expectedStores = [
-        'plays',
-        'formations',
-        'concepts',
-        'gameplans',
-        'practiceScripts',
-        'blockingSchemes',
-        'scoutingNotes',
-        'folders',
-      ];
-
-      for (const store of expectedStores) {
+      for (const store of ALL_STORE_NAMES) {
         expect(backup.stores[store]).toBeDefined();
         expect(Array.isArray(backup.stores[store])).toBe(true);
       }
@@ -57,6 +68,7 @@ describe('backup', () => {
     it('should capture multiple entities per store', async () => {
       const { dbPut } = await import('@/lib/db/indexeddb');
       const { createBackup } = await import('@/lib/db/backup');
+      await clearAllStores();
 
       await dbPut(
         'plays',
@@ -84,6 +96,7 @@ describe('backup', () => {
     it('should clear existing data and import backup data', async () => {
       const { dbPut, dbGet } = await import('@/lib/db/indexeddb');
       const { restoreFromBackup } = await import('@/lib/db/backup');
+      await clearAllStores();
 
       // Existing data
       await dbPut(
@@ -143,6 +156,7 @@ describe('backup', () => {
     it('should ignore unknown store names in backup data', async () => {
       const { dbGet } = await import('@/lib/db/indexeddb');
       const { restoreFromBackup } = await import('@/lib/db/backup');
+      await clearAllStores();
 
       const backupData: BackupData = {
         version: 1,
@@ -166,6 +180,7 @@ describe('backup', () => {
     it('should return entity counts for each store', async () => {
       const { dbPut } = await import('@/lib/db/indexeddb');
       const { getBackupMetadata } = await import('@/lib/db/backup');
+      await clearAllStores();
 
       await dbPut(
         'plays',
@@ -193,6 +208,7 @@ describe('backup', () => {
     it('should return a size estimate in bytes', async () => {
       const { dbPut } = await import('@/lib/db/indexeddb');
       const { getBackupMetadata } = await import('@/lib/db/backup');
+      await clearAllStores();
 
       await dbPut(
         'plays',
@@ -208,6 +224,7 @@ describe('backup', () => {
     it('should include a createdAt timestamp', async () => {
       await import('@/lib/db/indexeddb');
       const { getBackupMetadata } = await import('@/lib/db/backup');
+      await clearAllStores();
 
       const metadata = await getBackupMetadata();
 
@@ -222,6 +239,7 @@ describe('backup', () => {
       const { createBackup, restoreFromBackup } = await import(
         '@/lib/db/backup'
       );
+      await clearAllStores();
 
       await dbPut(
         'plays',

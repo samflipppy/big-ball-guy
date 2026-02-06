@@ -43,13 +43,11 @@ export function getMigrationsDB(): Promise<IDBPDatabase> {
 
 /** For testing: reset the cached DB promise and clear all stored entries */
 export async function resetMigrationsDB(): Promise<void> {
-  if (migrationsDbPromise) {
-    try {
-      const db = await migrationsDbPromise;
-      await db.clear(MIGRATIONS_STORE);
-    } catch {
-      // DB may not exist yet
-    }
+  try {
+    const db = await getMigrationsDB();
+    await db.clear(MIGRATIONS_STORE);
+  } catch {
+    // DB may not exist yet
   }
   migrationsDbPromise = null;
 }

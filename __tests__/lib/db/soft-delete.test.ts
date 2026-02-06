@@ -9,6 +9,16 @@ vi.mock('@/lib/utils', async (importOriginal) => {
   };
 });
 
+/** Helper: clear both the trash store and the main stores we use in tests. */
+async function clearAllStores() {
+  const { getDB } = await import('@/lib/db/indexeddb');
+  const { resetTrashDB } = await import('@/lib/db/soft-delete');
+  await resetTrashDB();
+  const db = await getDB();
+  await db.clear('plays');
+  await db.clear('formations');
+}
+
 describe('soft-delete', () => {
   beforeEach(() => {
     vi.resetModules();
@@ -17,10 +27,8 @@ describe('soft-delete', () => {
   describe('softDelete', () => {
     it('should move an entity from the main store to the trash', async () => {
       const { dbPut, dbGet } = await import('@/lib/db/indexeddb');
-      const { softDelete, getTrash, resetTrashDB } = await import(
-        '@/lib/db/soft-delete'
-      );
-      await resetTrashDB();
+      const { softDelete, getTrash } = await import('@/lib/db/soft-delete');
+      await clearAllStores();
 
       await dbPut(
         'plays',
@@ -46,11 +54,8 @@ describe('soft-delete', () => {
     });
 
     it('should throw when the entity does not exist', async () => {
-      await import('@/lib/db/indexeddb');
-      const { softDelete, resetTrashDB } = await import(
-        '@/lib/db/soft-delete'
-      );
-      await resetTrashDB();
+      const { softDelete } = await import('@/lib/db/soft-delete');
+      await clearAllStores();
 
       await expect(softDelete('plays', 'nonexistent')).rejects.toThrow(
         'Entity plays/nonexistent not found',
@@ -61,10 +66,10 @@ describe('soft-delete', () => {
   describe('restore', () => {
     it('should restore a soft-deleted entity back to the main store', async () => {
       const { dbPut, dbGet } = await import('@/lib/db/indexeddb');
-      const { softDelete, restore, getTrash, resetTrashDB } = await import(
+      const { softDelete, restore, getTrash } = await import(
         '@/lib/db/soft-delete'
       );
-      await resetTrashDB();
+      await clearAllStores();
 
       await dbPut(
         'plays',
@@ -90,9 +95,8 @@ describe('soft-delete', () => {
     });
 
     it('should throw when the trash entry does not exist', async () => {
-      await import('@/lib/db/indexeddb');
-      const { restore, resetTrashDB } = await import('@/lib/db/soft-delete');
-      await resetTrashDB();
+      const { restore } = await import('@/lib/db/soft-delete');
+      await clearAllStores();
 
       await expect(restore('plays', 'nonexistent')).rejects.toThrow(
         'Trash entry for plays/nonexistent not found',
@@ -103,10 +107,8 @@ describe('soft-delete', () => {
   describe('getTrash', () => {
     it('should list all trashed items', async () => {
       const { dbPut } = await import('@/lib/db/indexeddb');
-      const { softDelete, getTrash, resetTrashDB } = await import(
-        '@/lib/db/soft-delete'
-      );
-      await resetTrashDB();
+      const { softDelete, getTrash } = await import('@/lib/db/soft-delete');
+      await clearAllStores();
 
       await dbPut(
         'plays',
@@ -128,10 +130,8 @@ describe('soft-delete', () => {
 
     it('should filter trash by entity type', async () => {
       const { dbPut } = await import('@/lib/db/indexeddb');
-      const { softDelete, getTrash, resetTrashDB } = await import(
-        '@/lib/db/soft-delete'
-      );
-      await resetTrashDB();
+      const { softDelete, getTrash } = await import('@/lib/db/soft-delete');
+      await clearAllStores();
 
       await dbPut(
         'plays',
@@ -160,9 +160,10 @@ describe('soft-delete', () => {
   describe('permanentDelete', () => {
     it('should permanently remove an entity from the trash', async () => {
       const { dbPut } = await import('@/lib/db/indexeddb');
-      const { softDelete, permanentDelete, getTrash, resetTrashDB } =
-        await import('@/lib/db/soft-delete');
-      await resetTrashDB();
+      const { softDelete, permanentDelete, getTrash } = await import(
+        '@/lib/db/soft-delete'
+      );
+      await clearAllStores();
 
       await dbPut(
         'plays',
@@ -178,11 +179,8 @@ describe('soft-delete', () => {
     });
 
     it('should throw when the trash entry does not exist', async () => {
-      await import('@/lib/db/indexeddb');
-      const { permanentDelete, resetTrashDB } = await import(
-        '@/lib/db/soft-delete'
-      );
-      await resetTrashDB();
+      const { permanentDelete } = await import('@/lib/db/soft-delete');
+      await clearAllStores();
 
       await expect(permanentDelete('plays', 'nonexistent')).rejects.toThrow(
         'Trash entry for plays/nonexistent not found',
@@ -192,10 +190,10 @@ describe('soft-delete', () => {
 
   describe('emptyTrash', () => {
     it('should remove all items from the trash when no days specified', async () => {
-      const { getTrashDB, emptyTrash, getTrash, resetTrashDB } = await import(
+      const { getTrashDB, emptyTrash, getTrash } = await import(
         '@/lib/db/soft-delete'
       );
-      await resetTrashDB();
+      await clearAllStores();
 
       const trashDb = await getTrashDB();
       await trashDb.put('trash', {
@@ -221,10 +219,10 @@ describe('soft-delete', () => {
     });
 
     it('should only remove items older than the specified number of days', async () => {
-      const { getTrashDB, emptyTrash, getTrash, resetTrashDB } = await import(
+      const { getTrashDB, emptyTrash, getTrash } = await import(
         '@/lib/db/soft-delete'
       );
-      await resetTrashDB();
+      await clearAllStores();
 
       const now = Date.now();
       const sixtyDaysAgo = new Date(
@@ -259,10 +257,8 @@ describe('soft-delete', () => {
     });
 
     it('should return 0 when trash is already empty', async () => {
-      const { emptyTrash, resetTrashDB } = await import(
-        '@/lib/db/soft-delete'
-      );
-      await resetTrashDB();
+      const { emptyTrash } = await import('@/lib/db/soft-delete');
+      await clearAllStores();
 
       const count = await emptyTrash();
       expect(count).toBe(0);

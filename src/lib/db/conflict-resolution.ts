@@ -54,13 +54,11 @@ export function getConflictDB(): Promise<IDBPDatabase> {
 
 /** For testing: reset the cached DB promise and clear all stored entries */
 export async function resetConflictDB(): Promise<void> {
-  if (conflictDbPromise) {
-    try {
-      const db = await conflictDbPromise;
-      await db.clear(CONFLICT_STORE);
-    } catch {
-      // DB may not exist yet
-    }
+  try {
+    const db = await getConflictDB();
+    await db.clear(CONFLICT_STORE);
+  } catch {
+    // DB may not exist yet
   }
   conflictDbPromise = null;
 }
@@ -146,16 +144,22 @@ export function mergeRecords(local: SyncRecord, remote: SyncRecord): SyncRecord 
   for (const key of allKeys) {
     if (excludeFields.has(key)) continue;
 
-    const localVal = JSON.stringify(local[key]);
-    const remoteVal = JSON.stringify(remote[key]);
+    const inLocal = key in local;
+    const inRemote = key in remote;
 
     if (key === 'updatedAt') {
       merged.updatedAt = remoteTime >= localTime ? remote.updatedAt : local.updatedAt;
-    } else if (localVal === remoteVal) {
-      // No conflict on this field — keep the shared value
+    } else if (inLocal && !inRemote) {
+      // Field only in local — auto-merge (keep it)
+      merged[key] = local[key];
+    } else if (!inLocal && inRemote) {
+      // Field only in remote — auto-merge (keep it)
+      merged[key] = remote[key];
+    } else if (JSON.stringify(local[key]) === JSON.stringify(remote[key])) {
+      // Both have the field with the same value — keep it
       merged[key] = local[key];
     } else {
-      // Conflicting field — use the value from the newer record
+      // Both have the field with different values — use the newer record's value
       merged[key] = remoteTime >= localTime ? remote[key] : local[key];
     }
   }

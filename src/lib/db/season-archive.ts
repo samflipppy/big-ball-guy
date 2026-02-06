@@ -47,13 +47,11 @@ export function getArchiveDB(): Promise<IDBPDatabase> {
 
 /** For testing: reset the cached DB promise and clear all stored entries */
 export async function resetArchiveDB(): Promise<void> {
-  if (archiveDbPromise) {
-    try {
-      const db = await archiveDbPromise;
-      await db.clear(ARCHIVE_STORE);
-    } catch {
-      // DB may not exist yet
-    }
+  try {
+    const db = await getArchiveDB();
+    await db.clear(ARCHIVE_STORE);
+  } catch {
+    // DB may not exist yet
   }
   archiveDbPromise = null;
 }

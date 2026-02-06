@@ -38,13 +38,11 @@ export function getTrashDB(): Promise<IDBPDatabase> {
 
 /** For testing: reset the cached DB promise and clear all stored entries */
 export async function resetTrashDB(): Promise<void> {
-  if (trashDbPromise) {
-    try {
-      const db = await trashDbPromise;
-      await db.clear(TRASH_STORE);
-    } catch {
-      // DB may not exist yet
-    }
+  try {
+    const db = await getTrashDB();
+    await db.clear(TRASH_STORE);
+  } catch {
+    // DB may not exist yet
   }
   trashDbPromise = null;
 }

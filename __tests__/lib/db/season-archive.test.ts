@@ -9,6 +9,19 @@ vi.mock('@/lib/utils', async (importOriginal) => {
   };
 });
 
+/** Helper: clear archive store and the main stores we read from. */
+async function clearAllStores() {
+  const { getDB } = await import('@/lib/db/indexeddb');
+  const { resetArchiveDB } = await import('@/lib/db/season-archive');
+  await resetArchiveDB();
+  const db = await getDB();
+  await db.clear('plays');
+  await db.clear('formations');
+  await db.clear('gameplans');
+  await db.clear('concepts');
+  await db.clear('folders');
+}
+
 describe('season-archive', () => {
   beforeEach(() => {
     vi.resetModules();
@@ -17,10 +30,8 @@ describe('season-archive', () => {
   describe('archiveSeason', () => {
     it('should create an archive with all current data', async () => {
       const { dbPut } = await import('@/lib/db/indexeddb');
-      const { archiveSeason, resetArchiveDB } = await import(
-        '@/lib/db/season-archive'
-      );
-      await resetArchiveDB();
+      const { archiveSeason } = await import('@/lib/db/season-archive');
+      await clearAllStores();
 
       await dbPut(
         'plays',
@@ -51,10 +62,8 @@ describe('season-archive', () => {
 
     it('should include correct metadata counts', async () => {
       const { dbPut } = await import('@/lib/db/indexeddb');
-      const { archiveSeason, resetArchiveDB } = await import(
-        '@/lib/db/season-archive'
-      );
-      await resetArchiveDB();
+      const { archiveSeason } = await import('@/lib/db/season-archive');
+      await clearAllStores();
 
       await dbPut(
         'plays',
@@ -82,10 +91,8 @@ describe('season-archive', () => {
 
     it('should include plays, formations, game plans, concepts, and folders', async () => {
       const { dbPut } = await import('@/lib/db/indexeddb');
-      const { archiveSeason, resetArchiveDB } = await import(
-        '@/lib/db/season-archive'
-      );
-      await resetArchiveDB();
+      const { archiveSeason } = await import('@/lib/db/season-archive');
+      await clearAllStores();
 
       await dbPut(
         'plays',
@@ -126,9 +133,10 @@ describe('season-archive', () => {
   describe('getArchivedSeasons', () => {
     it('should list all archived seasons', async () => {
       const { dbPut } = await import('@/lib/db/indexeddb');
-      const { archiveSeason, getArchivedSeasons, resetArchiveDB } =
-        await import('@/lib/db/season-archive');
-      await resetArchiveDB();
+      const { archiveSeason, getArchivedSeasons } = await import(
+        '@/lib/db/season-archive'
+      );
+      await clearAllStores();
 
       // Need some data to archive
       await dbPut(
@@ -146,9 +154,10 @@ describe('season-archive', () => {
     });
 
     it('should return archives sorted by date descending', async () => {
-      const { getArchiveDB, getArchivedSeasons, resetArchiveDB } =
-        await import('@/lib/db/season-archive');
-      await resetArchiveDB();
+      const { getArchiveDB, getArchivedSeasons } = await import(
+        '@/lib/db/season-archive'
+      );
+      await clearAllStores();
 
       const archiveDb = await getArchiveDB();
       await archiveDb.put('season-archives', {
@@ -193,10 +202,8 @@ describe('season-archive', () => {
     });
 
     it('should return empty array when no archives exist', async () => {
-      const { getArchivedSeasons, resetArchiveDB } = await import(
-        '@/lib/db/season-archive'
-      );
-      await resetArchiveDB();
+      const { getArchivedSeasons } = await import('@/lib/db/season-archive');
+      await clearAllStores();
 
       const seasons = await getArchivedSeasons();
       expect(seasons).toEqual([]);
@@ -206,10 +213,10 @@ describe('season-archive', () => {
   describe('restoreSeason', () => {
     it('should restore archived data back to active stores', async () => {
       const { dbPut, dbGetAll } = await import('@/lib/db/indexeddb');
-      const { archiveSeason, restoreSeason, resetArchiveDB } = await import(
+      const { archiveSeason, restoreSeason } = await import(
         '@/lib/db/season-archive'
       );
-      await resetArchiveDB();
+      await clearAllStores();
 
       // Set up data and archive
       await dbPut(
@@ -253,11 +260,8 @@ describe('season-archive', () => {
     });
 
     it('should throw when archive does not exist', async () => {
-      await import('@/lib/db/indexeddb');
-      const { restoreSeason, resetArchiveDB } = await import(
-        '@/lib/db/season-archive'
-      );
-      await resetArchiveDB();
+      const { restoreSeason } = await import('@/lib/db/season-archive');
+      await clearAllStores();
 
       await expect(restoreSeason('nonexistent')).rejects.toThrow(
         'Archive nonexistent not found',
@@ -268,13 +272,10 @@ describe('season-archive', () => {
   describe('deleteArchive', () => {
     it('should permanently remove an archive', async () => {
       const { dbPut } = await import('@/lib/db/indexeddb');
-      const {
-        archiveSeason,
-        deleteArchive,
-        getArchivedSeasons,
-        resetArchiveDB,
-      } = await import('@/lib/db/season-archive');
-      await resetArchiveDB();
+      const { archiveSeason, deleteArchive, getArchivedSeasons } = await import(
+        '@/lib/db/season-archive'
+      );
+      await clearAllStores();
 
       await dbPut(
         'plays',
@@ -290,11 +291,8 @@ describe('season-archive', () => {
     });
 
     it('should throw when archive does not exist', async () => {
-      await import('@/lib/db/indexeddb');
-      const { deleteArchive, resetArchiveDB } = await import(
-        '@/lib/db/season-archive'
-      );
-      await resetArchiveDB();
+      const { deleteArchive } = await import('@/lib/db/season-archive');
+      await clearAllStores();
 
       await expect(deleteArchive('nonexistent')).rejects.toThrow(
         'Archive nonexistent not found',
