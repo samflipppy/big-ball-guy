@@ -51,7 +51,7 @@ describe('referral', () => {
     });
 
     it('uses only non-ambiguous characters', () => {
-      const info = generateReferralCode('user-1');
+      const info = generateReferralCode('ambiguous-char-test-user');
       // Should not contain O, 0, I, 1, L
       expect(info.code).not.toMatch(/[OIL01]/);
     });
