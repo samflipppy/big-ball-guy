@@ -60,7 +60,7 @@ describe('useStorageQuota', () => {
     const { result } = renderHook(() => useStorageQuota());
 
     await act(async () => {
-      await vi.runAllTimersAsync();
+      await vi.advanceTimersByTimeAsync(1);
     });
 
     expect(result.current.isWarning).toBe(true);
@@ -73,7 +73,7 @@ describe('useStorageQuota', () => {
     const { result } = renderHook(() => useStorageQuota());
 
     await act(async () => {
-      await vi.runAllTimersAsync();
+      await vi.advanceTimersByTimeAsync(1);
     });
 
     expect(result.current.isCritical).toBe(true);
@@ -106,7 +106,7 @@ describe('useStorageQuota', () => {
     const { result } = renderHook(() => useStorageQuota());
 
     await act(async () => {
-      await vi.runAllTimersAsync();
+      await vi.advanceTimersByTimeAsync(1);
     });
 
     // Should remain at zero defaults
@@ -120,7 +120,7 @@ describe('useStorageQuota', () => {
     const { result } = renderHook(() => useStorageQuota());
 
     await act(async () => {
-      await vi.runAllTimersAsync();
+      await vi.advanceTimersByTimeAsync(1);
     });
 
     expect(result.current.percentUsed).toBe(0);
@@ -142,7 +142,7 @@ describe('useStorageQuota', () => {
     const { result } = renderHook(() => useStorageQuota());
 
     await act(async () => {
-      await vi.runAllTimersAsync();
+      await vi.advanceTimersByTimeAsync(1);
     });
 
     expect(result.current.percentUsed).toBe(33);
