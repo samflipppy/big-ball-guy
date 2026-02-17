@@ -6,10 +6,17 @@ import { cn } from '@/lib/utils';
 import { useAppStore } from '@/stores/playStore';
 import type { AppMode, SyncStatus } from '@/types';
 
+const MODE_ROUTES: Record<AppMode, string> = {
+  sketch: '/sketch',
+  playbook: '/playbook',
+  gameplan: '/gameplan',
+  practice: '/practice',
+  gameday: '/gameday',
+};
+
 interface NavItem {
   mode: AppMode;
   label: string;
-  href: string;
   icon: React.ReactNode;
 }
 
@@ -17,7 +24,6 @@ const navItems: NavItem[] = [
   {
     mode: 'sketch',
     label: 'Quick Sketch',
-    href: '/sketch',
     icon: (
       <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
@@ -27,7 +33,6 @@ const navItems: NavItem[] = [
   {
     mode: 'playbook',
     label: 'Playbook',
-    href: '/playbook',
     icon: (
       <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
@@ -37,7 +42,6 @@ const navItems: NavItem[] = [
   {
     mode: 'gameplan',
     label: 'Game Plans',
-    href: '/gameplan',
     icon: (
       <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15a2.25 2.25 0 012.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
@@ -47,7 +51,6 @@ const navItems: NavItem[] = [
   {
     mode: 'practice',
     label: 'Practice',
-    href: '/practice',
     icon: (
       <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -57,7 +60,6 @@ const navItems: NavItem[] = [
   {
     mode: 'gameday',
     label: 'Game Day',
-    href: '/gameday',
     icon: (
       <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v1.5M3 21v-6m0 0l2.77-.693a9 9 0 016.208.682l.108.054a9 9 0 006.086.71l3.114-.732a48.524 48.524 0 01-.005-10.499l-3.11.732a9 9 0 01-6.085-.711l-.108-.054a9 9 0 00-6.208-.682L3 4.5M3 15V4.5" />
@@ -72,9 +74,20 @@ export interface SidebarProps {
 }
 
 export function Sidebar({ syncStatus, teamName = 'My Team' }: SidebarProps) {
+  const { currentMode, setCurrentMode, sidebarOpen, toggleSidebar } = useAppStore();
   const router = useRouter();
   const pathname = usePathname();
-  const { setCurrentMode, sidebarOpen, toggleSidebar } = useAppStore();
+
+  // Sync currentMode from pathname on mount/navigation
+  useEffect(() => {
+    const entry = Object.entries(MODE_ROUTES).find(([, route]) => pathname?.startsWith(route));
+    if (entry) {
+      const mode = entry[0] as AppMode;
+      if (mode !== currentMode) {
+        setCurrentMode(mode);
+      }
+    }
+  }, [pathname, currentMode, setCurrentMode]);
 
   // Close sidebar on mobile when clicking outside
   const handleOverlayClick = useCallback(() => {
@@ -151,13 +164,13 @@ export function Sidebar({ syncStatus, teamName = 'My Team' }: SidebarProps) {
         <nav className="flex-1 overflow-y-auto py-3 px-2" aria-label="App modes">
           <ul className="space-y-1">
             {navItems.map((item) => {
-              const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
+              const isActive = currentMode === item.mode;
               return (
                 <li key={item.mode}>
                   <button
                     onClick={() => {
                       setCurrentMode(item.mode);
-                      router.push(item.href);
+                      router.push(MODE_ROUTES[item.mode]);
                     }}
                     className={cn(
                       'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
@@ -197,7 +210,6 @@ export function Sidebar({ syncStatus, teamName = 'My Team' }: SidebarProps) {
             className={cn(
               'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-zinc-600 transition-colors',
               'hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100',
-              pathname === '/settings' && 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-400',
               !sidebarOpen && 'justify-center px-0',
             )}
             aria-label="Settings"

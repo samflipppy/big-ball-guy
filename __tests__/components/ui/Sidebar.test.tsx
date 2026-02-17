@@ -4,8 +4,19 @@ import userEvent from '@testing-library/user-event';
 import { Sidebar } from '@/components/ui/Sidebar';
 import { useAppStore } from '@/stores/playStore';
 
+let mockPathname = '/playbook';
+const mockPush = vi.fn((path: string) => {
+  mockPathname = path;
+});
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: mockPush }),
+  usePathname: () => mockPathname,
+}));
+
 describe('Sidebar', () => {
   beforeEach(() => {
+    mockPathname = '/playbook';
+    mockPush.mockClear();
     // Reset store to defaults
     useAppStore.setState({
       currentMode: 'playbook',
@@ -51,6 +62,7 @@ describe('Sidebar', () => {
 
     await user.click(screen.getByText('Quick Sketch'));
     expect(useAppStore.getState().currentMode).toBe('sketch');
+    expect(mockPush).toHaveBeenCalledWith('/sketch');
   });
 
   it('changes mode to gameplan when Game Plans is clicked', async () => {
@@ -59,6 +71,7 @@ describe('Sidebar', () => {
 
     await user.click(screen.getByText('Game Plans'));
     expect(useAppStore.getState().currentMode).toBe('gameplan');
+    expect(mockPush).toHaveBeenCalledWith('/gameplan');
   });
 
   it('changes mode to practice when Practice is clicked', async () => {
@@ -67,6 +80,7 @@ describe('Sidebar', () => {
 
     await user.click(screen.getByText('Practice'));
     expect(useAppStore.getState().currentMode).toBe('practice');
+    expect(mockPush).toHaveBeenCalledWith('/practice');
   });
 
   it('changes mode to gameday when Game Day is clicked', async () => {
@@ -75,11 +89,20 @@ describe('Sidebar', () => {
 
     await user.click(screen.getByText('Game Day'));
     expect(useAppStore.getState().currentMode).toBe('gameday');
+    expect(mockPush).toHaveBeenCalledWith('/gameday');
   });
 
   it('renders settings button', () => {
     render(<Sidebar />);
     expect(screen.getByLabelText('Settings')).toBeInTheDocument();
+  });
+
+  it('navigates to settings when settings button is clicked', async () => {
+    const user = userEvent.setup();
+    render(<Sidebar />);
+
+    await user.click(screen.getByLabelText('Settings'));
+    expect(mockPush).toHaveBeenCalledWith('/settings');
   });
 
   it('shows sync status indicator', () => {

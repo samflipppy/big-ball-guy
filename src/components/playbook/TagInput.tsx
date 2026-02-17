@@ -4,14 +4,14 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 const TAG_COLORS = [
-  'bg-blue-100 text-blue-800 border-blue-200',
-  'bg-green-100 text-green-800 border-green-200',
-  'bg-purple-100 text-purple-800 border-purple-200',
-  'bg-amber-100 text-amber-800 border-amber-200',
-  'bg-rose-100 text-rose-800 border-rose-200',
-  'bg-cyan-100 text-cyan-800 border-cyan-200',
-  'bg-indigo-100 text-indigo-800 border-indigo-200',
-  'bg-teal-100 text-teal-800 border-teal-200',
+  'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800',
+  'bg-green-100 text-green-800 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800',
+  'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800',
+  'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800',
+  'bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-800',
+  'bg-cyan-100 text-cyan-800 border-cyan-200 dark:bg-cyan-950 dark:text-cyan-300 dark:border-cyan-800',
+  'bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-950 dark:text-indigo-300 dark:border-indigo-800',
+  'bg-teal-100 text-teal-800 border-teal-200 dark:bg-teal-950 dark:text-teal-300 dark:border-teal-800',
 ];
 
 function getTagColor(tag: string): string {
@@ -162,7 +162,7 @@ export default function TagInput({
           onKeyDown={handleKeyDown}
           onFocus={() => setShowSuggestions(true)}
           placeholder={tags.length === 0 ? placeholder : ''}
-          className="min-w-[80px] flex-1 border-none bg-transparent text-sm text-zinc-900 dark:text-zinc-100 outline-none placeholder:text-zinc-400 dark:placeholder:text-zinc-500"
+          className="min-w-[80px] flex-1 border-none bg-transparent text-sm outline-none placeholder:text-zinc-400"
           disabled={disabled || (maxTags !== undefined && tags.length >= maxTags)}
           data-testid="tag-input"
         />
@@ -170,7 +170,7 @@ export default function TagInput({
 
       {showSuggestions && filteredSuggestions.length > 0 && (
         <ul
-          className="absolute z-50 mt-1 max-h-48 w-full overflow-auto rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 py-1 shadow-lg"
+          className="absolute z-50 mt-1 max-h-48 w-full overflow-auto rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 py-1 shadow-lg"
           data-testid="tag-suggestions"
           role="listbox"
         >
@@ -180,8 +180,8 @@ export default function TagInput({
               role="option"
               aria-selected={index === highlightedIndex}
               className={cn(
-                'cursor-pointer px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100',
-                index === highlightedIndex ? 'bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300' : 'hover:bg-zinc-50 dark:hover:bg-zinc-700',
+                'cursor-pointer px-3 py-1.5 text-sm',
+                index === highlightedIndex ? 'bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400' : 'text-zinc-900 dark:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800',
               )}
               onMouseDown={(e) => {
                 e.preventDefault();

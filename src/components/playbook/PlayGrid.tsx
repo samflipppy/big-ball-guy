@@ -61,7 +61,7 @@ export default function PlayGrid({
           </svg>
         </div>
         <h3 className="text-lg font-medium text-zinc-700 dark:text-zinc-300">No plays yet</h3>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="mt-1 text-sm text-zinc-500">
           Create your first play to get started building your playbook.
         </p>
       </div>
@@ -72,19 +72,19 @@ export default function PlayGrid({
     <div className={cn('flex flex-col', className)} data-testid="play-grid">
       {/* Toolbar */}
       <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-700 px-4 py-2">
-        <span className="text-xs text-zinc-500 dark:text-zinc-400" data-testid="play-count">
+        <span className="text-xs text-zinc-500" data-testid="play-count">
           {plays.length} play{plays.length !== 1 ? 's' : ''}
         </span>
 
         <div className="flex items-center gap-3">
           {/* Sort selector */}
           <div className="flex items-center gap-1">
-            <label htmlFor="sort-select" className="text-xs text-zinc-500 dark:text-zinc-400">Sort:</label>
+            <label htmlFor="sort-select" className="text-xs text-zinc-500">Sort:</label>
             <select
               id="sort-select"
               value={sortField}
               onChange={(e) => onSortChange(e.target.value as SortField, sortDirection)}
-              className="rounded border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 px-2 py-1 text-xs focus:border-blue-500 focus:outline-none"
+              className="rounded border border-zinc-300 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 px-2 py-1 text-xs focus:border-blue-500 focus:outline-none"
               data-testid="sort-select"
             >
               {SORT_OPTIONS.map((opt) => (
@@ -97,7 +97,7 @@ export default function PlayGrid({
               onClick={() =>
                 onSortChange(sortField, sortDirection === 'asc' ? 'desc' : 'asc')
               }
-              className="rounded p-1 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:text-zinc-600 dark:hover:text-zinc-300"
+              className="rounded p-1 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-600 dark:hover:text-zinc-300"
               title={sortDirection === 'asc' ? 'Ascending' : 'Descending'}
               data-testid="sort-direction"
             >

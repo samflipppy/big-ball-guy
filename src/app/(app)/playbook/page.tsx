@@ -9,7 +9,7 @@ import FolderTree from '@/components/playbook/FolderTree';
 import PlayGrid from '@/components/playbook/PlayGrid';
 import PlayCreationModal from '@/components/playbook/PlayCreationModal';
 import TagInput from '@/components/playbook/TagInput';
-import type { Player, PlayerAssignment, DefensiveOverlay } from '@/types';
+import type { Player } from '@/types';
 
 export default function PlaybookPage() {
   const router = useRouter();
@@ -81,21 +81,10 @@ export default function PlaybookPage() {
       personnel: string;
       tags: string[];
       notes?: string;
-      category?: string;
-      assignments?: PlayerAssignment[];
-      blockingSchemeId?: string;
-      defensiveOverlay?: DefensiveOverlay;
     }) => {
       const play = await createPlay({
-        name: data.name,
-        formationId: data.formationId,
-        personnel: data.personnel,
-        tags: data.tags,
-        notes: data.notes,
-        category: data.category,
-        assignments: data.assignments || [],
-        blockingSchemeId: data.blockingSchemeId,
-        defensiveOverlay: data.defensiveOverlay,
+        ...data,
+        assignments: [],
         teamId: '',
       });
       setShowCreateModal(false);
@@ -174,19 +163,19 @@ export default function PlaybookPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950" data-testid="playbook-loading">
+      <div className="flex h-screen items-center justify-center" data-testid="playbook-loading">
         <div className="flex flex-col items-center gap-3">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">Loading playbook...</p>
+          <p className="text-sm text-zinc-500">Loading playbook...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen flex-col bg-zinc-50 dark:bg-zinc-950" data-testid="playbook-page">
+    <div className="flex h-screen flex-col bg-zinc-50 dark:bg-zinc-900" data-testid="playbook-page">
       {/* Top toolbar */}
-      <div className="flex items-center gap-3 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3">
+      <div className="flex items-center gap-3 border-b border-zinc-200 bg-white px-4 py-3 dark:border-zinc-700 dark:bg-zinc-900">
         <h1 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Playbook</h1>
 
         {/* Search */}
@@ -206,7 +195,7 @@ export default function PlaybookPage() {
             onChange={(e) =>
               setFilters((prev) => ({ ...prev, searchQuery: e.target.value }))
             }
-            className="w-full rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 py-1.5 pl-9 pr-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded-lg border border-zinc-300 py-1.5 pl-9 pr-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
             data-testid="search-input"
           />
         </div>
@@ -220,7 +209,7 @@ export default function PlaybookPage() {
               personnel: e.target.value || null,
             }))
           }
-          className="rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
+          className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
           data-testid="personnel-filter"
           aria-label="Filter by personnel"
         >
@@ -241,7 +230,7 @@ export default function PlaybookPage() {
               formationId: e.target.value || null,
             }))
           }
-          className="rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
+          className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
           data-testid="formation-filter"
           aria-label="Filter by formation"
         >
@@ -252,46 +241,11 @@ export default function PlaybookPage() {
             </option>
           ))}
         </select>
-
-        {/* Filter by side (offense/defense) */}
-        <div className="flex rounded-lg bg-zinc-200 dark:bg-zinc-700 p-0.5">
-          <button
-            onClick={() => setFilters((prev) => ({ ...prev, tags: prev.tags.filter(t => t !== 'defense') }))}
-            className={cn(
-              'px-3 py-1 text-xs font-medium rounded-md transition-colors',
-              !filters.tags.includes('defense')
-                ? 'bg-white dark:bg-zinc-600 text-zinc-900 dark:text-zinc-100 shadow-sm'
-                : 'text-zinc-600 dark:text-zinc-400'
-            )}
-          >
-            All
-          </button>
-          <button
-            onClick={() => setFilters((prev) => ({ ...prev, tags: prev.tags.filter(t => t !== 'defense') }))}
-            className={cn(
-              'px-3 py-1 text-xs font-medium rounded-md transition-colors',
-              'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
-            )}
-          >
-            Offense
-          </button>
-          <button
-            onClick={() => setFilters((prev) => ({ ...prev, tags: [...prev.tags.filter(t => t !== 'defense'), 'defense'] }))}
-            className={cn(
-              'px-3 py-1 text-xs font-medium rounded-md transition-colors',
-              filters.tags.includes('defense')
-                ? 'bg-white dark:bg-zinc-600 text-zinc-900 dark:text-zinc-100 shadow-sm'
-                : 'text-zinc-600 dark:text-zinc-400'
-            )}
-          >
-            Defense
-          </button>
-        </div>
       </div>
 
       {/* Bulk actions bar */}
       {selectedPlayIds.length > 0 && (
-        <div className="flex items-center gap-3 border-b border-blue-200 bg-blue-50 px-4 py-2" data-testid="bulk-actions">
+        <div className="flex items-center gap-3 border-b border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30 px-4 py-2" data-testid="bulk-actions">
           <span className="text-sm font-medium text-blue-700">
             {selectedPlayIds.length} selected
           </span>
@@ -337,7 +291,7 @@ export default function PlaybookPage() {
             ) : (
               <button
                 onClick={() => setShowBulkTagInput(true)}
-                className="rounded bg-white px-3 py-1 text-xs font-medium text-zinc-700 border border-zinc-300 hover:bg-zinc-50"
+                className="rounded bg-white dark:bg-zinc-800 px-3 py-1 text-xs font-medium text-zinc-700 dark:text-zinc-300 border border-zinc-300 dark:border-zinc-600 hover:bg-zinc-50 dark:hover:bg-zinc-700"
                 data-testid="bulk-tag-btn"
               >
                 Tag
@@ -352,7 +306,7 @@ export default function PlaybookPage() {
                 handleBulkMove(val === '__none__' ? undefined : val);
                 e.target.value = '';
               }}
-              className="rounded border border-zinc-300 bg-white px-3 py-1 text-xs"
+              className="rounded border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 dark:text-zinc-300 px-3 py-1 text-xs"
               data-testid="bulk-move-select"
               defaultValue=""
               aria-label="Move to folder"
@@ -370,7 +324,7 @@ export default function PlaybookPage() {
 
             <button
               onClick={handleBulkDelete}
-              className="rounded bg-red-50 px-3 py-1 text-xs font-medium text-red-600 border border-red-200 hover:bg-red-100"
+              className="rounded bg-red-50 dark:bg-red-950/30 px-3 py-1 text-xs font-medium text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/40"
               data-testid="bulk-delete-btn"
             >
               Delete
@@ -382,7 +336,7 @@ export default function PlaybookPage() {
       {/* Main content */}
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar — Folder Tree */}
-        <aside className="w-60 flex-shrink-0 border-r border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-y-auto">
+        <aside className="w-60 flex-shrink-0 border-r border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900 overflow-y-auto">
           <FolderTree
             folders={folders}
             selectedFolderId={filters.folderId}

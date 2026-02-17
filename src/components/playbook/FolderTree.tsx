@@ -184,8 +184,8 @@ export default function FolderTree({
           className={cn(
             'flex items-center gap-1.5 rounded-md px-2 py-1.5 cursor-pointer transition-colors',
             selectedFolderId === folder.id
-              ? 'bg-blue-50 text-blue-700'
-              : 'text-zinc-700 hover:bg-zinc-100',
+              ? 'bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400'
+              : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800',
           )}
           style={{ paddingLeft: `${8 + depth * 16}px` }}
           onClick={() => onSelectFolder(folder.id)}
@@ -201,7 +201,7 @@ export default function FolderTree({
                 e.stopPropagation();
                 toggleExpanded(folder.id);
               }}
-              className="flex h-4 w-4 items-center justify-center rounded hover:bg-zinc-200"
+              className="flex h-4 w-4 items-center justify-center rounded hover:bg-zinc-200 dark:hover:bg-zinc-700"
               data-testid={`folder-toggle-${folder.id}`}
             >
               <svg
@@ -264,8 +264,8 @@ export default function FolderTree({
         className={cn(
           'flex items-center gap-2 rounded-md px-2 py-1.5 cursor-pointer transition-colors',
           selectedFolderId === null
-            ? 'bg-blue-50 text-blue-700'
-            : 'text-zinc-700 hover:bg-zinc-100',
+            ? 'bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400'
+            : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800',
         )}
         onClick={() => onSelectFolder(null)}
         onDragOver={handleDragOver}
@@ -311,13 +311,13 @@ export default function FolderTree({
       </div>
 
       {/* New folder button */}
-      <div className="border-t border-zinc-200 px-2 py-2">
+      <div className="border-t border-zinc-200 dark:border-zinc-700 px-2 py-2">
         <button
           onClick={() => {
             setIsCreating(true);
             setNewFolderParentId(undefined);
           }}
-          className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700"
+          className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-700 dark:hover:text-zinc-300"
           data-testid="new-folder-btn"
         >
           <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -330,20 +330,20 @@ export default function FolderTree({
       {/* Context menu */}
       {contextMenu?.show && (
         <div
-          className="fixed z-50 rounded-lg border border-zinc-200 bg-white py-1 shadow-lg"
+          className="fixed z-50 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 py-1 shadow-lg"
           style={{ left: contextMenu.x, top: contextMenu.y }}
           data-testid="folder-context-menu"
         >
           <button
             onClick={() => startRename(contextMenu.folderId)}
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-100"
+            className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
             data-testid="context-rename"
           >
             Rename
           </button>
           <button
             onClick={() => startCreateSubfolder(contextMenu.folderId)}
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-100"
+            className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
             data-testid="context-new-subfolder"
           >
             New Subfolder
@@ -351,7 +351,7 @@ export default function FolderTree({
           <hr className="my-1 border-zinc-100" />
           <button
             onClick={() => handleDelete(contextMenu.folderId)}
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50"
+            className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
             data-testid="context-delete"
           >
             Delete
