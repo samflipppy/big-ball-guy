@@ -9,6 +9,9 @@ import type {
   HistoryEntry,
   TeamId,
   PlayId,
+  TeamMember,
+  UserRole,
+  UserId,
 } from '@/types';
 
 // ---- History (undo/redo) ----
@@ -82,6 +85,15 @@ interface AppStore {
   concepts: Concept[];
   gameplans: GamePlan[];
 
+  // Team settings
+  teamName: string;
+  teamLevel: string;
+  primaryColor: string;
+  secondaryColor: string;
+  teamMembers: TeamMember[];
+  currentUserId: UserId | null;
+  currentUserRole: UserRole;
+
   // Actions
   setCurrentTeamId: (id: TeamId | null) => void;
   setCurrentPlayId: (id: PlayId | null) => void;
@@ -107,6 +119,23 @@ interface AppStore {
   addFormation: (formation: Formation) => void;
   setConcepts: (concepts: Concept[]) => void;
   setGameplans: (gameplans: GamePlan[]) => void;
+
+  // Team settings actions
+  setTeamName: (name: string) => void;
+  setTeamLevel: (level: string) => void;
+  setPrimaryColor: (color: string) => void;
+  setSecondaryColor: (color: string) => void;
+  setTeamMembers: (members: TeamMember[]) => void;
+  removeTeamMember: (userId: string) => void;
+  updateTeamMemberRole: (userId: string, role: UserRole) => void;
+  setCurrentUserId: (id: UserId | null) => void;
+  setCurrentUserRole: (role: UserRole) => void;
+  updateTeamSettings: (settings: {
+    teamName?: string;
+    teamLevel?: string;
+    primaryColor?: string;
+    secondaryColor?: string;
+  }) => void;
 }
 
 export const useAppStore = create<AppStore>((set) => ({
@@ -128,6 +157,14 @@ export const useAppStore = create<AppStore>((set) => ({
   formations: [],
   concepts: [],
   gameplans: [],
+
+  teamName: 'My Team',
+  teamLevel: 'high_school',
+  primaryColor: '#1d4ed8',
+  secondaryColor: '#ffffff',
+  teamMembers: [],
+  currentUserId: null,
+  currentUserRole: 'head_coach',
 
   setCurrentTeamId: (id) => set({ currentTeamId: id }),
   setCurrentPlayId: (id) => set({ currentPlayId: id }),
@@ -158,4 +195,29 @@ export const useAppStore = create<AppStore>((set) => ({
     set((s) => ({ formations: [...s.formations, formation] })),
   setConcepts: (concepts) => set({ concepts }),
   setGameplans: (gameplans) => set({ gameplans }),
+
+  setTeamName: (teamName) => set({ teamName }),
+  setTeamLevel: (teamLevel) => set({ teamLevel }),
+  setPrimaryColor: (primaryColor) => set({ primaryColor }),
+  setSecondaryColor: (secondaryColor) => set({ secondaryColor }),
+  setTeamMembers: (teamMembers) => set({ teamMembers }),
+  removeTeamMember: (userId) =>
+    set((s) => ({
+      teamMembers: s.teamMembers.filter((m) => m.userId !== userId),
+    })),
+  updateTeamMemberRole: (userId, role) =>
+    set((s) => ({
+      teamMembers: s.teamMembers.map((m) =>
+        m.userId === userId ? { ...m, role } : m
+      ),
+    })),
+  setCurrentUserId: (id) => set({ currentUserId: id }),
+  setCurrentUserRole: (role) => set({ currentUserRole: role }),
+  updateTeamSettings: (settings) =>
+    set({
+      ...(settings.teamName !== undefined ? { teamName: settings.teamName } : {}),
+      ...(settings.teamLevel !== undefined ? { teamLevel: settings.teamLevel } : {}),
+      ...(settings.primaryColor !== undefined ? { primaryColor: settings.primaryColor } : {}),
+      ...(settings.secondaryColor !== undefined ? { secondaryColor: settings.secondaryColor } : {}),
+    }),
 }));

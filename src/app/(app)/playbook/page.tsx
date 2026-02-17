@@ -82,30 +82,40 @@ export default function PlaybookPage() {
       tags: string[];
       notes?: string;
     }) => {
-      const play = await createPlay({
-        ...data,
-        assignments: [],
-        teamId: '',
-      });
-      setShowCreateModal(false);
-      router.push(`/playbook/${play.id}`);
+      try {
+        const play = await createPlay({
+          ...data,
+          assignments: [],
+          teamId: '',
+        });
+        setShowCreateModal(false);
+        router.push(`/playbook/${play.id}`);
+      } catch (err) {
+        console.error('Failed to create play:', err);
+        // Modal stays open so user can retry
+      }
     },
     [createPlay, router],
   );
 
   const handleQuickCreate = useCallback(
     async (formationId: string) => {
-      const formation = formations.find((f) => f.id === formationId);
-      const play = await createPlay({
-        name: `New Play ${Date.now().toString(36)}`,
-        formationId,
-        personnel: formation?.personnel ?? '11',
-        tags: [],
-        assignments: [],
-        teamId: '',
-      });
-      setShowCreateModal(false);
-      router.push(`/playbook/${play.id}`);
+      try {
+        const formation = formations.find((f) => f.id === formationId);
+        const play = await createPlay({
+          name: `New Play ${Date.now().toString(36)}`,
+          formationId,
+          personnel: formation?.personnel ?? '11',
+          tags: [],
+          assignments: [],
+          teamId: '',
+        });
+        setShowCreateModal(false);
+        router.push(`/playbook/${play.id}`);
+      } catch (err) {
+        console.error('Failed to quick-create play:', err);
+        // Modal stays open so user can retry
+      }
     },
     [createPlay, formations, router],
   );

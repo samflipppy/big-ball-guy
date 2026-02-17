@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { PricingTable } from '@/components/billing/PricingTable';
 import { TeamMembers } from '@/components/settings/TeamMembers';
 import { createPortalSession, type PlanId } from '@/lib/stripe';
 import { cn } from '@/lib/utils';
-import type { TeamMember, UserRole } from '@/types';
+import { useAppStore } from '@/stores/playStore';
+import type { UserRole } from '@/types';
 
 type SettingsSection = 'team' | 'billing' | 'account';
 
@@ -25,39 +26,34 @@ const LEVEL_OPTIONS = [
 
 export default function SettingsPage() {
   const [activeSection, setActiveSection] = useState<SettingsSection>('team');
-  const [teamName, setTeamName] = useState('My Team');
-  const [teamLevel, setTeamLevel] = useState('high_school');
-  const [primaryColor, setPrimaryColor] = useState('#1d4ed8');
-  const [secondaryColor, setSecondaryColor] = useState('#ffffff');
+  // Team data from Zustand store
+  const storeTeamName = useAppStore((s) => s.teamName);
+  const storeTeamLevel = useAppStore((s) => s.teamLevel);
+  const storePrimaryColor = useAppStore((s) => s.primaryColor);
+  const storeSecondaryColor = useAppStore((s) => s.secondaryColor);
+  const currentTeamId = useAppStore((s) => s.currentTeamId) ?? '';
+  const currentUserId = useAppStore((s) => s.currentUserId) ?? '';
+  const currentUserRole = useAppStore((s) => s.currentUserRole);
+  const teamMembers = useAppStore((s) => s.teamMembers);
+  const removeTeamMember = useAppStore((s) => s.removeTeamMember);
+  const updateTeamMemberRole = useAppStore((s) => s.updateTeamMemberRole);
+  const updateTeamSettings = useAppStore((s) => s.updateTeamSettings);
+
+  // Local form state (initialized from store, persisted on save)
+  const [teamName, setTeamName] = useState(storeTeamName);
+  const [teamLevel, setTeamLevel] = useState(storeTeamLevel);
+  const [primaryColor, setPrimaryColor] = useState(storePrimaryColor);
+  const [secondaryColor, setSecondaryColor] = useState(storeSecondaryColor);
   const [currentPlan] = useState<PlanId>('free');
   const [email] = useState('coach@example.com');
   const [saving, setSaving] = useState(false);
 
-  // Mock team data - in production this would come from API/database
-  const currentUserId = 'user-1';
-  const currentTeamId = 'team-1';
-  const currentUserRole: UserRole = 'head_coach';
-
-  // Mock team members - in production this would come from database
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([
-    {
-      userId: 'user-1',
-      teamId: 'team-1',
-      role: 'head_coach',
-      displayName: 'Coach Smith',
-      email: 'coach@example.com',
-      joinedAt: '2024-01-01T00:00:00Z',
-    },
-  ]);
-
   const handleMemberRemove = (memberId: string) => {
-    setTeamMembers((prev) => prev.filter((m) => m.userId !== memberId));
+    removeTeamMember(memberId);
   };
 
   const handleRoleChange = (memberId: string, newRole: UserRole) => {
-    setTeamMembers((prev) =>
-      prev.map((m) => (m.userId === memberId ? { ...m, role: newRole } : m))
-    );
+    updateTeamMemberRole(memberId, newRole);
   };
 
   const inputClasses =
@@ -67,13 +63,17 @@ export default function SettingsPage() {
 
   async function handleSaveTeam() {
     setSaving(true);
-    // In production this would persist the team to the backend
-    await new Promise((r) => setTimeout(r, 500));
+    updateTeamSettings({
+      teamName,
+      teamLevel,
+      primaryColor,
+      secondaryColor,
+    });
     setSaving(false);
   }
 
   function handleManageBilling() {
-    createPortalSession('team-id');
+    createPortalSession(currentTeamId);
   }
 
   return (
@@ -111,10 +111,10 @@ export default function SettingsPage() {
             onRoleChange={handleRoleChange}
           />
 
-          {/* Team Branding */}
+          {/* Team Settings */}
           <div>
             <h3 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-              Team Branding
+              Team Settings
             </h3>
             <div className="space-y-4 rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
               <div>
@@ -212,7 +212,7 @@ export default function SettingsPage() {
             </p>
           </div>
 
-          <PricingTable currentPlan={currentPlan} teamId="team-id" />
+          <PricingTable currentPlan={currentPlan} teamId={currentTeamId} />
         </section>
       )}
 

@@ -16,13 +16,13 @@ interface PlayCreationModalProps {
     personnel: string;
     tags: string[];
     notes?: string;
-  }) => void;
+  }) => void | Promise<void>;
   onCreateFormation?: (data: {
     name: string;
     personnel: string;
     players: Player[];
   }) => void;
-  onQuickCreate: (formationId: string) => void;
+  onQuickCreate: (formationId: string) => void | Promise<void>;
   onClose: () => void;
   className?: string;
 }
@@ -45,15 +45,24 @@ export default function PlayCreationModal({
   const [tags, setTags] = useState<string[]>([]);
   const [notes, setNotes] = useState('');
   const [nameError, setNameError] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
+  const [createError, setCreateError] = useState('');
 
   const handleFormationSelect = useCallback((formation: Formation) => {
     setSelectedFormation(formation);
     setPersonnel(formation.personnel);
   }, []);
 
-  const handleQuickCreate = useCallback(() => {
+  const handleQuickCreate = useCallback(async () => {
     if (selectedFormation) {
-      onQuickCreate(selectedFormation.id);
+      setIsCreating(true);
+      try {
+        await onQuickCreate(selectedFormation.id);
+      } catch (err) {
+        setCreateError(err instanceof Error ? err.message : 'Failed to create play');
+      } finally {
+        setIsCreating(false);
+      }
     }
   }, [selectedFormation, onQuickCreate]);
 
@@ -66,20 +75,28 @@ export default function PlayCreationModal({
     setStep(1);
   }, []);
 
-  const handleCreate = useCallback(() => {
+  const handleCreate = useCallback(async () => {
     if (!playName.trim()) {
       setNameError('Play name is required');
       return;
     }
     if (!selectedFormation) return;
 
-    onCreatePlay({
-      name: playName.trim(),
-      formationId: selectedFormation.id,
-      personnel,
-      tags,
-      notes: notes.trim() || undefined,
-    });
+    setCreateError('');
+    setIsCreating(true);
+    try {
+      await onCreatePlay({
+        name: playName.trim(),
+        formationId: selectedFormation.id,
+        personnel,
+        tags,
+        notes: notes.trim() || undefined,
+      });
+    } catch (err) {
+      setCreateError(err instanceof Error ? err.message : 'Failed to create play');
+    } finally {
+      setIsCreating(false);
+    }
   }, [playName, selectedFormation, personnel, tags, notes, onCreatePlay]);
 
   return (
@@ -266,15 +283,27 @@ export default function PlayCreationModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-zinc-200 dark:border-zinc-700 px-6 py-4">
+        <div className="flex flex-col border-t border-zinc-200 dark:border-zinc-700 px-6 py-4 gap-2">
+          {createError && (
+            <p className="text-xs text-red-500" data-testid="create-error">
+              {createError}
+            </p>
+          )}
+          <div className="flex items-center justify-between">
           <div>
             {step === 1 && selectedFormation && (
               <button
                 onClick={handleQuickCreate}
-                className="text-sm font-medium text-blue-600 hover:text-blue-700"
+                disabled={isCreating}
+                className={cn(
+                  'text-sm font-medium',
+                  isCreating
+                    ? 'text-blue-400 cursor-not-allowed'
+                    : 'text-blue-600 hover:text-blue-700',
+                )}
                 data-testid="quick-create-btn"
               >
-                Quick Create
+                {isCreating ? 'Creating...' : 'Quick Create'}
               </button>
             )}
           </div>
@@ -315,12 +344,19 @@ export default function PlayCreationModal({
             {step === 2 && (
               <button
                 onClick={handleCreate}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                disabled={isCreating}
+                className={cn(
+                  'rounded-lg px-4 py-2 text-sm font-medium text-white',
+                  isCreating
+                    ? 'bg-blue-400 cursor-not-allowed'
+                    : 'bg-blue-600 hover:bg-blue-700',
+                )}
                 data-testid="modal-create"
               >
-                Create Play
+                {isCreating ? 'Creating...' : 'Create Play'}
               </button>
             )}
+          </div>
           </div>
         </div>
       </div>

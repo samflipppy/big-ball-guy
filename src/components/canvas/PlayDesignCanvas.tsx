@@ -59,6 +59,9 @@ export function PlayDesignCanvas({
   const [drawingPoints, setDrawingPoints] = useState<number[]>([]);
   const [drawingPlayerId, setDrawingPlayerId] = useState<string | null>(null);
 
+  // Dragging state - position overrides for players (formations are read-only templates)
+  const [positionOverrides, setPositionOverrides] = useState<Record<string, { x: number; y: number }>>({});
+
   // Scale factors
   const scaleX = width / DEFAULT_FIELD.width;
   const scaleY = height / DEFAULT_FIELD.height;
@@ -87,28 +90,32 @@ export function PlayDesignCanvas({
     return play.assignments.find((a) => a.playerId === selectedPlayerId);
   }, [selectedPlayerId, play.assignments]);
 
-  // Scale player positions (offensive)
+  // Scale player positions (offensive) - apply position overrides
   const scaledPlayers = useMemo(() => {
-    return formation.players.map((p) => ({
-      ...p,
-      scaledLocation: {
-        x: p.location.x * scaleX,
-        y: p.location.y * scaleY,
-      },
-    }));
-  }, [formation.players, scaleX, scaleY]);
+    return formation.players.map((p) => {
+      const override = positionOverrides[p.id];
+      return {
+        ...p,
+        scaledLocation: override
+          ? { x: override.x, y: override.y }
+          : { x: p.location.x * scaleX, y: p.location.y * scaleY },
+      };
+    });
+  }, [formation.players, scaleX, scaleY, positionOverrides]);
 
-  // Scale defensive player positions
+  // Scale defensive player positions - apply position overrides
   const scaledDefensivePlayers = useMemo(() => {
     if (!showDefense || !play.defensiveOverlay?.players) return [];
-    return play.defensiveOverlay.players.map((p) => ({
-      ...p,
-      scaledLocation: {
-        x: p.location.x * scaleX,
-        y: p.location.y * scaleY,
-      },
-    }));
-  }, [showDefense, play.defensiveOverlay?.players, scaleX, scaleY]);
+    return play.defensiveOverlay.players.map((p) => {
+      const override = positionOverrides[p.id];
+      return {
+        ...p,
+        scaledLocation: override
+          ? { x: override.x, y: override.y }
+          : { x: p.location.x * scaleX, y: p.location.y * scaleY },
+      };
+    });
+  }, [showDefense, play.defensiveOverlay?.players, scaleX, scaleY, positionOverrides]);
 
   // Combine all scaled players for lookups
   const allScaledPlayers = useMemo(() => {
@@ -185,6 +192,20 @@ export function PlayDesignCanvas({
   const handleClosePanel = useCallback(() => {
     setSelectedPlayerId(null);
   }, []);
+
+  // Handle player drag end (update position override)
+  const handleDragEnd = useCallback(
+    (playerId: string, e: any) => {
+      const node = e.target;
+      const newX = node.x();
+      const newY = node.y();
+      setPositionOverrides((prev) => ({
+        ...prev,
+        [playerId]: { x: newX, y: newY },
+      }));
+    },
+    []
+  );
 
   // Handle stage click (deselect)
   const handleStageClick = useCallback((e: any) => {
@@ -312,12 +333,38 @@ export function PlayDesignCanvas({
         label: 'Custom Motion',
       };
       handleAssign(assignment);
+    } else if (tool === 'draw-block' && simplifiedPoints.length > 0) {
+      const lastPoint = simplifiedPoints[simplifiedPoints.length - 1];
+      const endX = playerX + lastPoint.x * yardsToPixels;
+      const endY = playerY + lastPoint.y * yardsToPixels;
+
+      // Find nearest player to endpoint (potential block target)
+      const targetPlayer = findNearestPlayer(endX, endY);
+      const isTargetDifferent = targetPlayer && targetPlayer.id !== drawingPlayerId;
+
+      // Calculate direction angle from player to endpoint
+      const dx = lastPoint.x;
+      const dy = lastPoint.y;
+      const directionDeg = (Math.atan2(dx, -dy) * 180) / Math.PI;
+
+      const assignment: PlayerAssignment = {
+        playerId: drawingPlayerId,
+        blocking: {
+          id: generateId(),
+          blockerId: drawingPlayerId,
+          blockType: 'drive',
+          direction: directionDeg,
+          ...(isTargetDifferent ? { targetId: targetPlayer.id } : {}),
+        },
+        label: 'Custom Block',
+      };
+      handleAssign(assignment);
     }
 
     setIsDrawing(false);
     setDrawingPoints([]);
     setDrawingPlayerId(null);
-  }, [isDrawing, drawingPlayerId, drawingPoints, allPlayers, scaleX, scaleY, yardsToPixels, tool, handleAssign]);
+  }, [isDrawing, drawingPlayerId, drawingPoints, allPlayers, scaleX, scaleY, yardsToPixels, tool, handleAssign, findNearestPlayer]);
 
   // Simplify a route by removing redundant points
   const simplifyRoute = (points: { x: number; y: number; type: 'line' | 'curve' | 'break' }[], tolerance: number) => {
@@ -357,9 +404,11 @@ export function PlayDesignCanvas({
         key={player.id}
         x={x}
         y={y}
+        draggable={tool === 'select'}
         onClick={(e) => handlePlayerClick(player.id, e)}
         onTap={(e) => handlePlayerClick(player.id, e)}
-        style={{ cursor: 'pointer' }}
+        onDragEnd={(e) => handleDragEnd(player.id, e)}
+        style={{ cursor: tool === 'select' ? 'grab' : 'pointer' }}
       >
         {/* Selection ring */}
         {isSelected && (
@@ -784,7 +833,7 @@ export function PlayDesignCanvas({
   return (
     <div className={cn('relative', className)}>
       {/* Drawing Tools Toolbar */}
-      <div className="absolute top-3 left-3 z-10 flex gap-1 bg-white/90 dark:bg-zinc-800/90 rounded-lg shadow p-1">
+      <div className="absolute top-3 left-3 z-10 flex flex-col gap-1 bg-white/90 dark:bg-zinc-800/90 rounded-lg shadow p-1" data-testid="drawing-tools-container" role="toolbar" aria-label="Drawing tools">
         <button
           onClick={() => setTool('select')}
           className={cn(
@@ -794,6 +843,7 @@ export function PlayDesignCanvas({
               : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700'
           )}
           title="Select (click players)"
+          aria-label="Select"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
@@ -808,9 +858,25 @@ export function PlayDesignCanvas({
               : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700'
           )}
           title="Draw Route"
+          aria-label="Draw Route"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+          </svg>
+        </button>
+        <button
+          onClick={() => setTool('draw-block')}
+          className={cn(
+            'p-2 rounded text-sm font-medium transition-colors',
+            tool === 'draw-block'
+              ? 'bg-green-600 text-white'
+              : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700'
+          )}
+          title="Draw Block"
+          aria-label="Draw Block"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-3-3v6m-7 4h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
           </svg>
         </button>
         <button
@@ -822,9 +888,42 @@ export function PlayDesignCanvas({
               : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700'
           )}
           title="Draw Motion"
+          aria-label="Draw Motion"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" strokeDasharray="4 2" />
+          </svg>
+        </button>
+        <div className="h-px bg-zinc-300 dark:bg-zinc-600 my-0.5" />
+        <button
+          onClick={() => {
+            // Eraser: clear assignment for selected player
+            if (selectedPlayerId) {
+              const newAssignments = play.assignments.filter((a) => a.playerId !== selectedPlayerId);
+              onAssignmentsChange(newAssignments);
+              setSelectedPlayerId(null);
+            }
+          }}
+          className="p-2 rounded text-sm font-medium transition-colors text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700"
+          title="Eraser"
+          aria-label="Eraser"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        </button>
+        <button
+          onClick={() => {
+            // Pan: reset view
+            setZoom(1);
+            setPan({ x: 0, y: 0 });
+          }}
+          className="p-2 rounded text-sm font-medium transition-colors text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700"
+          title="Pan / Reset View"
+          aria-label="Pan"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
           </svg>
         </button>
       </div>
@@ -874,7 +973,7 @@ export function PlayDesignCanvas({
           {isDrawing && drawingPoints.length >= 4 && (
             <Line
               points={drawingPoints}
-              stroke={tool === 'draw-route' ? '#f59e0b' : tool === 'draw-motion' ? '#8b5cf6' : '#22c55e'}
+              stroke={tool === 'draw-route' ? '#f59e0b' : tool === 'draw-motion' ? '#8b5cf6' : tool === 'draw-block' ? '#22c55e' : '#f59e0b'}
               strokeWidth={3}
               lineCap="round"
               lineJoin="round"

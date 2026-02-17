@@ -176,13 +176,6 @@ export default function SketchPage() {
             onAssignmentsChange={handleAssignmentsChange}
           />
         </div>
-
-        {/* Instructions */}
-        <div className="absolute left-3 top-3 z-10 bg-black/50 rounded-lg px-3 py-2 pointer-events-none">
-          <p className="text-white text-xs">
-            Click a player to assign routes, blocks, or motions
-          </p>
-        </div>
       </div>
 
       {/* Save modal */}
