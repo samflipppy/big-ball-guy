@@ -21,18 +21,25 @@ interface PlayCardProps {
 
 function PlayThumbnail({
   formation,
+  play,
   className,
 }: {
   formation?: Formation;
+  play?: Play;
   className?: string;
 }) {
-  if (!formation) {
+  const isDefense = play?.category === 'defense' || play?.defensiveOverlay;
+
+  if (!formation && !isDefense) {
     return (
-      <div className={cn('flex items-center justify-center rounded bg-zinc-200 text-zinc-400', className)}>
+      <div className={cn('flex items-center justify-center rounded bg-zinc-200 dark:bg-zinc-700 text-zinc-400 dark:text-zinc-500', className)}>
         <span className="text-xs">No formation</span>
       </div>
     );
   }
+
+  // For defensive plays, show the defensive overlay players
+  const defensivePlayers = play?.defensiveOverlay?.players || [];
 
   return (
     <svg
@@ -45,7 +52,8 @@ function PlayThumbnail({
         stroke="rgba(255,255,255,0.25)"
         strokeWidth={2}
       />
-      {formation.players.map((p) => (
+      {/* Offensive players (circles - blue) */}
+      {formation?.players.map((p) => (
         <circle
           key={p.id}
           cx={p.location.x}
@@ -56,6 +64,35 @@ function PlayThumbnail({
           strokeWidth={1.5}
         />
       ))}
+      {/* Defensive players (squares/triangles - red) */}
+      {defensivePlayers.map((p) => {
+        const isDL = p.position === 'DE' || p.position === 'DT' || p.position === 'NT';
+        if (isDL) {
+          // Square for DL
+          return (
+            <rect
+              key={p.id}
+              x={p.location.x - 8}
+              y={p.location.y - 8}
+              width={16}
+              height={16}
+              fill="#dc2626"
+              stroke="white"
+              strokeWidth={1.5}
+            />
+          );
+        }
+        // Triangle for LBs and DBs
+        return (
+          <polygon
+            key={p.id}
+            points={`${p.location.x},${p.location.y - 10} ${p.location.x - 9},${p.location.y + 6} ${p.location.x + 9},${p.location.y + 6}`}
+            fill="#dc2626"
+            stroke="white"
+            strokeWidth={1.5}
+          />
+        );
+      })}
     </svg>
   );
 }
@@ -109,8 +146,8 @@ export default function PlayCard({
         className={cn(
           'group flex items-center gap-4 rounded-lg border px-4 py-3 transition-all',
           selected
-            ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500'
-            : 'border-zinc-200 bg-white hover:border-zinc-300 hover:shadow-sm',
+            ? 'border-blue-500 bg-blue-50 dark:bg-blue-950 ring-1 ring-blue-500'
+            : 'border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-600 hover:shadow-sm',
           className,
         )}
         onClick={handleClick}
@@ -133,17 +170,17 @@ export default function PlayCard({
         )}
 
         {/* Thumbnail */}
-        <PlayThumbnail formation={formation} className="h-12 w-20 flex-shrink-0" />
+        <PlayThumbnail formation={formation} play={play} className="h-12 w-20 flex-shrink-0" />
 
         {/* Info */}
         <div className="flex-1 min-w-0">
-          <h4 className="text-sm font-medium text-zinc-900 truncate">{play.name}</h4>
+          <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">{play.name}</h4>
           <div className="flex items-center gap-2 mt-0.5">
-            <span className="text-xs text-zinc-500">{formation?.name ?? 'Unknown'}</span>
-            <span className="text-zinc-300">|</span>
-            <span className="text-xs text-zinc-500">{play.personnel}</span>
-            <span className="text-zinc-300">|</span>
-            <span className="text-xs text-zinc-400">{formatDate(play.updatedAt)}</span>
+            <span className="text-xs text-zinc-500 dark:text-zinc-400">{formation?.name ?? 'Unknown'}</span>
+            <span className="text-zinc-300 dark:text-zinc-600">|</span>
+            <span className="text-xs text-zinc-500 dark:text-zinc-400">{play.personnel}</span>
+            <span className="text-zinc-300 dark:text-zinc-600">|</span>
+            <span className="text-xs text-zinc-400 dark:text-zinc-500">{formatDate(play.updatedAt)}</span>
           </div>
         </div>
 
@@ -176,7 +213,7 @@ export default function PlayCard({
                 e.stopPropagation();
                 onEdit(play.id);
               }}
-              className="rounded p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
+              className="rounded p-1.5 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:text-zinc-600 dark:hover:text-zinc-300"
               title="Edit"
               data-testid={`play-edit-${play.id}`}
             >
@@ -191,7 +228,7 @@ export default function PlayCard({
                 e.stopPropagation();
                 onDuplicate(play.id);
               }}
-              className="rounded p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
+              className="rounded p-1.5 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:text-zinc-600 dark:hover:text-zinc-300"
               title="Duplicate"
               data-testid={`play-duplicate-${play.id}`}
             >
@@ -206,7 +243,7 @@ export default function PlayCard({
                 e.stopPropagation();
                 onDelete(play.id);
               }}
-              className="rounded p-1.5 text-zinc-400 hover:bg-red-50 hover:text-red-500"
+              className="rounded p-1.5 text-zinc-400 hover:bg-red-50 dark:hover:bg-red-950 hover:text-red-500"
               title="Delete"
               data-testid={`play-delete-${play.id}`}
             >
@@ -226,8 +263,8 @@ export default function PlayCard({
       className={cn(
         'group flex flex-col rounded-lg border transition-all overflow-hidden',
         selected
-          ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500'
-          : 'border-zinc-200 bg-white hover:border-zinc-300 hover:shadow-md',
+          ? 'border-blue-500 bg-blue-50 dark:bg-blue-950 ring-1 ring-blue-500'
+          : 'border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-600 hover:shadow-md',
         className,
       )}
       onClick={handleClick}
@@ -239,7 +276,7 @@ export default function PlayCard({
     >
       {/* Thumbnail */}
       <div className="relative">
-        <PlayThumbnail formation={formation} className="h-28 w-full" />
+        <PlayThumbnail formation={formation} play={play} className="h-28 w-full" />
 
         {/* Checkbox overlay */}
         {onSelect && (
@@ -313,8 +350,8 @@ export default function PlayCard({
 
       {/* Info */}
       <div className="flex flex-col gap-1 p-3">
-        <h4 className="text-sm font-medium text-zinc-900 truncate">{play.name}</h4>
-        <p className="text-xs text-zinc-500 truncate">
+        <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">{play.name}</h4>
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
           {formation?.name ?? 'Unknown Formation'} · {play.personnel}
         </p>
         {play.tags.length > 0 && (
@@ -328,7 +365,7 @@ export default function PlayCard({
               </span>
             ))}
             {play.tags.length > 2 && (
-              <span className="text-[10px] text-zinc-400">+{play.tags.length - 2}</span>
+              <span className="text-[10px] text-zinc-400 dark:text-zinc-500">+{play.tags.length - 2}</span>
             )}
           </div>
         )}

@@ -110,14 +110,14 @@ export async function encryptData(
   const encodedData = encoder.encode(data);
 
   const encrypted = await subtle.encrypt(
-    { name: ALGORITHM, iv },
+    { name: ALGORITHM, iv: iv as Uint8Array<ArrayBuffer> },
     key,
     encodedData,
   );
 
   return {
     ciphertext: arrayBufferToBase64(encrypted),
-    iv: arrayBufferToBase64(iv.buffer),
+    iv: arrayBufferToBase64(iv.buffer as ArrayBuffer),
     algorithm: ALGORITHM,
   };
 }
@@ -179,7 +179,7 @@ export async function deriveKeyFromPassword(
   return subtle.deriveKey(
     {
       name: 'PBKDF2',
-      salt,
+      salt: salt as Uint8Array<ArrayBuffer>,
       iterations: PBKDF2_ITERATIONS,
       hash: 'SHA-256',
     },

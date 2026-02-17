@@ -4,31 +4,22 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/Button';
 import { useAppStore } from '@/stores/playStore';
 import { useHistoryStore } from '@/stores/playStore';
-import { PlayRenderer } from '@/components/canvas/PlayRenderer';
-import { DrawingTools } from '@/components/canvas/DrawingTools';
+import { PlayDesignCanvas } from '@/components/canvas/PlayDesignCanvas';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/Modal';
 import { BUILT_IN_FORMATIONS } from '@/lib/formations';
 import { generateId } from '@/lib/utils';
 import { plays as playsDb } from '@/lib/db/indexeddb';
-import type { Formation, Play, PlayerAssignment, CanvasState } from '@/types';
+import type { Formation, Play, PlayerAssignment } from '@/types';
 
 const DEFAULT_FORMATION = BUILT_IN_FORMATIONS[0]; // Singleback
 
 export default function SketchPage() {
-  const { canvasTool, addPlay } = useAppStore();
+  const { addPlay } = useAppStore();
   const { clearHistory } = useHistoryStore();
 
   // Play state
   const [formation, setFormation] = useState<Formation>(DEFAULT_FORMATION);
   const [assignments, setAssignments] = useState<PlayerAssignment[]>([]);
-  const [canvasState, setCanvasState] = useState<CanvasState>({
-    zoom: 1,
-    panX: 0,
-    panY: 0,
-    selectedIds: [],
-    tool: 'select',
-    isDrawing: false,
-  });
 
   // Container sizing
   const containerRef = useRef<HTMLDivElement>(null);
@@ -94,14 +85,6 @@ export default function SketchPage() {
   const handleNewPlay = useCallback(() => {
     setFormation(DEFAULT_FORMATION);
     setAssignments([]);
-    setCanvasState({
-      zoom: 1,
-      panX: 0,
-      panY: 0,
-      selectedIds: [],
-      tool: 'select',
-      isDrawing: false,
-    });
     clearHistory();
   }, [clearHistory]);
 
@@ -139,21 +122,10 @@ export default function SketchPage() {
     }
   }, [playName, formation, assignments, addPlay, handleNewPlay]);
 
-  // Player select handler
-  const handlePlayerSelect = useCallback(
-    (playerId: string) => {
-      setCanvasState((prev) => ({
-        ...prev,
-        selectedIds: [playerId],
-      }));
-    },
-    [],
-  );
-
-  // Canvas change handler
-  const handleCanvasChange = useCallback(
-    (state: CanvasState) => {
-      setCanvasState(state);
+  // Assignments change handler
+  const handleAssignmentsChange = useCallback(
+    (newAssignments: PlayerAssignment[]) => {
+      setAssignments(newAssignments);
     },
     [],
   );
@@ -196,21 +168,20 @@ export default function SketchPage() {
       <div className="relative flex-1 bg-[#2d5a27] dark:bg-[#1a3d18]" data-testid="canvas-area">
         {/* Canvas container for measuring */}
         <div ref={containerRef} className="absolute inset-0">
-          <PlayRenderer
+          <PlayDesignCanvas
             play={currentPlay}
             formation={formation}
-            mode="full"
             width={dimensions.width}
             height={dimensions.height}
-            interactive
-            onPlayerSelect={handlePlayerSelect}
-            onCanvasChange={handleCanvasChange}
+            onAssignmentsChange={handleAssignmentsChange}
           />
         </div>
 
-        {/* Drawing tools overlaid on top-left */}
-        <div className="absolute left-3 top-3 z-10" data-testid="drawing-tools-container">
-          <DrawingTools orientation="vertical" />
+        {/* Instructions */}
+        <div className="absolute left-3 top-3 z-10 bg-black/50 rounded-lg px-3 py-2 pointer-events-none">
+          <p className="text-white text-xs">
+            Click a player to assign routes, blocks, or motions
+          </p>
         </div>
       </div>
 

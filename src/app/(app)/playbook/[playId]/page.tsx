@@ -1,16 +1,15 @@
 'use client';
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { usePlaybook } from '@/hooks/usePlaybook';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { useAppStore } from '@/stores/playStore';
-import { DrawingTools } from '@/components/canvas/DrawingTools';
-import { PlayRenderer } from '@/components/canvas/PlayRenderer';
+import { PlayDesignCanvas } from '@/components/canvas/PlayDesignCanvas';
 import { PERSONNEL_GROUPS, DEFENSIVE_FRONTS, COVERAGES, DEFAULT_DEFENSE_PLAYERS } from '@/lib/constants';
-import type { Play, Formation, DefensiveOverlay } from '@/types';
+import type { Play, Formation, DefensiveOverlay, PlayerAssignment } from '@/types';
 
 export default function PlayEditorPage() {
   const params = useParams();
@@ -32,6 +31,28 @@ export default function PlayEditorPage() {
   const [showDefense, setShowDefense] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
+
+  // Canvas sizing
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
+  const [canvasDimensions, setCanvasDimensions] = useState({ width: 800, height: 500 });
+
+  // Measure canvas container
+  useEffect(() => {
+    const container = canvasContainerRef.current;
+    if (!container) return;
+
+    const updateSize = () => {
+      const rect = container.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        setCanvasDimensions({ width: Math.floor(rect.width), height: Math.floor(rect.height) });
+      }
+    };
+
+    updateSize();
+    const observer = new ResizeObserver(updateSize);
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
 
   // Load play from store
   useEffect(() => {
@@ -154,6 +175,15 @@ export default function PlayEditorPage() {
       setShowDefense(true);
     }
   }, [play, showDefense]);
+
+  // Handle assignments change from PlayDesignCanvas
+  const handleAssignmentsChange = useCallback(
+    (newAssignments: PlayerAssignment[]) => {
+      if (!play) return;
+      setPlay({ ...play, assignments: newAssignments, updatedAt: new Date().toISOString() });
+    },
+    [play],
+  );
 
   // Save status text
   const saveStatusText = useMemo(() => {
@@ -287,26 +317,24 @@ export default function PlayEditorPage() {
       {/* Main Area */}
       <div className="flex flex-1 overflow-hidden">
         {/* Canvas Area */}
-        <div className="flex flex-1 flex-col overflow-hidden">
-          {/* Drawing Tools */}
-          <div className="flex items-center justify-center py-2 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900">
-            <DrawingTools orientation="horizontal" />
-          </div>
-
-          {/* Canvas */}
-          <div className="flex-1 flex items-center justify-center bg-[#2d5a27] dark:bg-[#1a3d18] overflow-auto" data-testid="canvas-area">
-            <PlayRenderer
+        <div className="relative flex flex-1 flex-col overflow-hidden bg-[#2d5a27] dark:bg-[#1a3d18]">
+          {/* Canvas Container */}
+          <div ref={canvasContainerRef} className="flex-1" data-testid="canvas-area">
+            <PlayDesignCanvas
               play={play}
               formation={formation}
-              mode="full"
-              width={800}
-              height={500}
+              width={canvasDimensions.width}
+              height={canvasDimensions.height}
+              onAssignmentsChange={handleAssignmentsChange}
               showDefense={showDefense}
-              showLabels={true}
-              showRoutes={true}
-              showBlocking={true}
-              interactive={true}
             />
+          </div>
+
+          {/* Instructions */}
+          <div className="absolute left-3 top-3 z-10 bg-black/50 rounded-lg px-3 py-2 pointer-events-none">
+            <p className="text-white text-xs">
+              Click a player to assign routes, blocks, or motions
+            </p>
           </div>
         </div>
 

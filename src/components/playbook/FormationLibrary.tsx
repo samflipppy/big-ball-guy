@@ -114,8 +114,8 @@ export default function FormationLibrary({
   return (
     <div className={cn('flex flex-col', className)} data-testid="formation-library">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200">
-        <h3 className="text-sm font-semibold text-zinc-900">Formations</h3>
+      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 dark:border-zinc-700">
+        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Formations</h3>
         {onCreateFormation && (
           <button
             onClick={() => setShowEditor(true)}
@@ -128,19 +128,19 @@ export default function FormationLibrary({
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-2 px-4 py-2 border-b border-zinc-100">
+      <div className="flex items-center gap-2 px-4 py-2 border-b border-zinc-100 dark:border-zinc-800">
         <input
           type="text"
           placeholder="Search formations..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="flex-1 rounded-md border border-zinc-300 px-2.5 py-1 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="flex-1 rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 px-2.5 py-1 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           data-testid="formation-search"
         />
         <select
           value={personnelFilter}
           onChange={(e) => setPersonnelFilter(e.target.value)}
-          className="rounded-md border border-zinc-300 px-2 py-1 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 px-2 py-1 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           data-testid="personnel-filter"
           aria-label="Filter by personnel"
         >
@@ -156,7 +156,7 @@ export default function FormationLibrary({
       {/* Grid */}
       <div className="flex-1 overflow-y-auto p-4">
         {filteredFormations.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-zinc-400" data-testid="no-formations">
+          <div className="flex flex-col items-center justify-center py-12 text-zinc-400 dark:text-zinc-500" data-testid="no-formations">
             <p className="text-sm">No formations found</p>
           </div>
         ) : (
@@ -168,8 +168,8 @@ export default function FormationLibrary({
                 className={cn(
                   'flex flex-col items-center rounded-lg border p-2 transition-all hover:shadow-md',
                   selectedFormationId === formation.id
-                    ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500'
-                    : 'border-zinc-200 bg-white hover:border-zinc-300',
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-950 ring-1 ring-blue-500'
+                    : 'border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-600',
                 )}
                 data-testid={`formation-card-${formation.id}`}
               >
@@ -177,10 +177,10 @@ export default function FormationLibrary({
                   players={formation.players}
                   className="mb-2 h-16 w-full"
                 />
-                <span className="text-xs font-medium text-zinc-800 truncate w-full text-center">
+                <span className="text-xs font-medium text-zinc-800 dark:text-zinc-200 truncate w-full text-center">
                   {formation.name}
                 </span>
-                <span className="text-[10px] text-zinc-400">
+                <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
                   {formation.personnel} personnel
                   {formation.isCustom && ' · Custom'}
                 </span>

@@ -87,7 +87,7 @@ export function addToStore<T extends { id: string }>(
   collection: 'formations' | 'concepts' | 'plays' | 'gamePlans' | 'blockingSchemes',
   item: T,
 ): void {
-  (store[collection] as Map<string, T>).set(item.id, item);
+  (store[collection] as unknown as Map<string, T>).set(item.id, item);
 }
 
 export function clearStore(): void {

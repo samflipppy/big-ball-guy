@@ -13,6 +13,7 @@ export interface PlayerIconProps {
   player: Player;
   selected?: boolean;
   interactive?: boolean;
+  draggable?: boolean;
   onSelect?: (playerId: string) => void;
   onDragEnd?: (playerId: string, x: number, y: number) => void;
   mode?: PlayRenderMode;
@@ -39,10 +40,13 @@ export function PlayerIcon({
   player,
   selected = false,
   interactive = false,
+  draggable,
   onSelect,
   onDragEnd,
   mode = 'full',
 }: PlayerIconProps) {
+  // draggable defaults to interactive if not explicitly set
+  const isDraggable = draggable ?? interactive;
   const scale = getModeScale(mode);
   const radius = PLAYER_RADIUS * scale;
   const fontSize = PLAYER_FONT_SIZE * scale;
@@ -133,7 +137,7 @@ export function PlayerIcon({
     <Group
       x={x}
       y={y}
-      draggable={interactive}
+      draggable={isDraggable}
       onClick={handleClick}
       onTap={handleClick}
       onDragEnd={handleDragEnd}

@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(npm run build)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(powershell:*)",
+      "Bash(cmd //c \"tasklist //FI \"\"PID eq 25300\"\" //FO TABLE //NH\")",
+      "Bash(wmic process:*)",
+      "Bash(taskkill:*)"
+    ]
+  }
+}

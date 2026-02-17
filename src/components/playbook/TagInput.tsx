@@ -117,7 +117,7 @@ export default function TagInput({
     <div ref={containerRef} className={cn('relative', className)}>
       <div
         className={cn(
-          'flex flex-wrap items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-2 py-1.5',
+          'flex flex-wrap items-center gap-1.5 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-2 py-1.5',
           'focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500',
           disabled && 'cursor-not-allowed opacity-50',
         )}
@@ -162,7 +162,7 @@ export default function TagInput({
           onKeyDown={handleKeyDown}
           onFocus={() => setShowSuggestions(true)}
           placeholder={tags.length === 0 ? placeholder : ''}
-          className="min-w-[80px] flex-1 border-none bg-transparent text-sm outline-none placeholder:text-zinc-400"
+          className="min-w-[80px] flex-1 border-none bg-transparent text-sm text-zinc-900 dark:text-zinc-100 outline-none placeholder:text-zinc-400 dark:placeholder:text-zinc-500"
           disabled={disabled || (maxTags !== undefined && tags.length >= maxTags)}
           data-testid="tag-input"
         />
@@ -170,7 +170,7 @@ export default function TagInput({
 
       {showSuggestions && filteredSuggestions.length > 0 && (
         <ul
-          className="absolute z-50 mt-1 max-h-48 w-full overflow-auto rounded-lg border border-zinc-200 bg-white py-1 shadow-lg"
+          className="absolute z-50 mt-1 max-h-48 w-full overflow-auto rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 py-1 shadow-lg"
           data-testid="tag-suggestions"
           role="listbox"
         >
@@ -180,8 +180,8 @@ export default function TagInput({
               role="option"
               aria-selected={index === highlightedIndex}
               className={cn(
-                'cursor-pointer px-3 py-1.5 text-sm',
-                index === highlightedIndex ? 'bg-blue-50 text-blue-700' : 'hover:bg-zinc-50',
+                'cursor-pointer px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100',
+                index === highlightedIndex ? 'bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300' : 'hover:bg-zinc-50 dark:hover:bg-zinc-700',
               )}
               onMouseDown={(e) => {
                 e.preventDefault();

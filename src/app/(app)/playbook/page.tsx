@@ -9,7 +9,7 @@ import FolderTree from '@/components/playbook/FolderTree';
 import PlayGrid from '@/components/playbook/PlayGrid';
 import PlayCreationModal from '@/components/playbook/PlayCreationModal';
 import TagInput from '@/components/playbook/TagInput';
-import type { Player } from '@/types';
+import type { Player, PlayerAssignment, DefensiveOverlay } from '@/types';
 
 export default function PlaybookPage() {
   const router = useRouter();
@@ -81,10 +81,21 @@ export default function PlaybookPage() {
       personnel: string;
       tags: string[];
       notes?: string;
+      category?: string;
+      assignments?: PlayerAssignment[];
+      blockingSchemeId?: string;
+      defensiveOverlay?: DefensiveOverlay;
     }) => {
       const play = await createPlay({
-        ...data,
-        assignments: [],
+        name: data.name,
+        formationId: data.formationId,
+        personnel: data.personnel,
+        tags: data.tags,
+        notes: data.notes,
+        category: data.category,
+        assignments: data.assignments || [],
+        blockingSchemeId: data.blockingSchemeId,
+        defensiveOverlay: data.defensiveOverlay,
         teamId: '',
       });
       setShowCreateModal(false);
@@ -163,20 +174,20 @@ export default function PlaybookPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center" data-testid="playbook-loading">
+      <div className="flex h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950" data-testid="playbook-loading">
         <div className="flex flex-col items-center gap-3">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
-          <p className="text-sm text-zinc-500">Loading playbook...</p>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">Loading playbook...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen flex-col bg-zinc-50" data-testid="playbook-page">
+    <div className="flex h-screen flex-col bg-zinc-50 dark:bg-zinc-950" data-testid="playbook-page">
       {/* Top toolbar */}
-      <div className="flex items-center gap-3 border-b border-zinc-200 bg-white px-4 py-3">
-        <h1 className="text-lg font-bold text-zinc-900">Playbook</h1>
+      <div className="flex items-center gap-3 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3">
+        <h1 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Playbook</h1>
 
         {/* Search */}
         <div className="relative flex-1 max-w-md">
@@ -195,7 +206,7 @@ export default function PlaybookPage() {
             onChange={(e) =>
               setFilters((prev) => ({ ...prev, searchQuery: e.target.value }))
             }
-            className="w-full rounded-lg border border-zinc-300 py-1.5 pl-9 pr-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 py-1.5 pl-9 pr-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             data-testid="search-input"
           />
         </div>
@@ -209,7 +220,7 @@ export default function PlaybookPage() {
               personnel: e.target.value || null,
             }))
           }
-          className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
+          className="rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
           data-testid="personnel-filter"
           aria-label="Filter by personnel"
         >
@@ -230,7 +241,7 @@ export default function PlaybookPage() {
               formationId: e.target.value || null,
             }))
           }
-          className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
+          className="rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
           data-testid="formation-filter"
           aria-label="Filter by formation"
         >
@@ -241,6 +252,41 @@ export default function PlaybookPage() {
             </option>
           ))}
         </select>
+
+        {/* Filter by side (offense/defense) */}
+        <div className="flex rounded-lg bg-zinc-200 dark:bg-zinc-700 p-0.5">
+          <button
+            onClick={() => setFilters((prev) => ({ ...prev, tags: prev.tags.filter(t => t !== 'defense') }))}
+            className={cn(
+              'px-3 py-1 text-xs font-medium rounded-md transition-colors',
+              !filters.tags.includes('defense')
+                ? 'bg-white dark:bg-zinc-600 text-zinc-900 dark:text-zinc-100 shadow-sm'
+                : 'text-zinc-600 dark:text-zinc-400'
+            )}
+          >
+            All
+          </button>
+          <button
+            onClick={() => setFilters((prev) => ({ ...prev, tags: prev.tags.filter(t => t !== 'defense') }))}
+            className={cn(
+              'px-3 py-1 text-xs font-medium rounded-md transition-colors',
+              'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
+            )}
+          >
+            Offense
+          </button>
+          <button
+            onClick={() => setFilters((prev) => ({ ...prev, tags: [...prev.tags.filter(t => t !== 'defense'), 'defense'] }))}
+            className={cn(
+              'px-3 py-1 text-xs font-medium rounded-md transition-colors',
+              filters.tags.includes('defense')
+                ? 'bg-white dark:bg-zinc-600 text-zinc-900 dark:text-zinc-100 shadow-sm'
+                : 'text-zinc-600 dark:text-zinc-400'
+            )}
+          >
+            Defense
+          </button>
+        </div>
       </div>
 
       {/* Bulk actions bar */}
@@ -336,7 +382,7 @@ export default function PlaybookPage() {
       {/* Main content */}
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar — Folder Tree */}
-        <aside className="w-60 flex-shrink-0 border-r border-zinc-200 bg-white overflow-y-auto">
+        <aside className="w-60 flex-shrink-0 border-r border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-y-auto">
           <FolderTree
             folders={folders}
             selectedFolderId={filters.folderId}

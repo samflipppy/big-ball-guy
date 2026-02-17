@@ -88,11 +88,13 @@ export async function dbPut<T extends { id: string }>(
   addToSyncQueue = true,
 ): Promise<void> {
   const db = await getDB();
+  // Check if record exists before starting the transaction
+  const existing = addToSyncQueue ? await db.get(storeName, data.id) : null;
+
   const tx = db.transaction([storeName, 'pendingSync'], 'readwrite');
   tx.objectStore(storeName).put(data);
 
   if (addToSyncQueue) {
-    const existing = await db.get(storeName, data.id);
     const syncEntry: PendingSyncEntry = {
       id: `${storeName}-${data.id}-${Date.now()}`,
       storeName,

@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/Button';
 import { PricingTable } from '@/components/billing/PricingTable';
+import { TeamMembers } from '@/components/settings/TeamMembers';
 import { createPortalSession, type PlanId } from '@/lib/stripe';
 import { cn } from '@/lib/utils';
+import type { TeamMember, UserRole } from '@/types';
 
 type SettingsSection = 'team' | 'billing' | 'account';
 
@@ -30,6 +32,33 @@ export default function SettingsPage() {
   const [currentPlan] = useState<PlanId>('free');
   const [email] = useState('coach@example.com');
   const [saving, setSaving] = useState(false);
+
+  // Mock team data - in production this would come from API/database
+  const currentUserId = 'user-1';
+  const currentTeamId = 'team-1';
+  const currentUserRole: UserRole = 'head_coach';
+
+  // Mock team members - in production this would come from database
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([
+    {
+      userId: 'user-1',
+      teamId: 'team-1',
+      role: 'head_coach',
+      displayName: 'Coach Smith',
+      email: 'coach@example.com',
+      joinedAt: '2024-01-01T00:00:00Z',
+    },
+  ]);
+
+  const handleMemberRemove = (memberId: string) => {
+    setTeamMembers((prev) => prev.filter((m) => m.userId !== memberId));
+  };
+
+  const handleRoleChange = (memberId: string, newRole: UserRole) => {
+    setTeamMembers((prev) =>
+      prev.map((m) => (m.userId === memberId ? { ...m, role: newRole } : m))
+    );
+  };
 
   const inputClasses =
     'block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500';
@@ -71,81 +100,94 @@ export default function SettingsPage() {
 
       {/* Team section */}
       {activeSection === 'team' && (
-        <section data-testid="team-section">
-          <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-            Team Settings
-          </h2>
-          <div className="space-y-4 rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
-            <div>
-              <label htmlFor="settings-team-name" className={labelClasses}>
-                Team Name
-              </label>
-              <input
-                id="settings-team-name"
-                type="text"
-                value={teamName}
-                onChange={(e) => setTeamName(e.target.value)}
-                className={inputClasses}
-              />
-            </div>
+        <section data-testid="team-section" className="space-y-8">
+          {/* Team Members */}
+          <TeamMembers
+            teamId={currentTeamId}
+            currentUserId={currentUserId}
+            currentUserRole={currentUserRole}
+            members={teamMembers}
+            onMemberRemove={handleMemberRemove}
+            onRoleChange={handleRoleChange}
+          />
 
-            <div>
-              <label htmlFor="settings-team-level" className={labelClasses}>
-                Level
-              </label>
-              <select
-                id="settings-team-level"
-                value={teamLevel}
-                onChange={(e) => setTeamLevel(e.target.value)}
-                className={inputClasses}
-              >
-                {LEVEL_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
+          {/* Team Branding */}
+          <div>
+            <h3 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+              Team Branding
+            </h3>
+            <div className="space-y-4 rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
               <div>
-                <label htmlFor="settings-primary-color" className={labelClasses}>
-                  Primary Color
+                <label htmlFor="settings-team-name" className={labelClasses}>
+                  Team Name
                 </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    id="settings-primary-color"
-                    type="color"
-                    value={primaryColor}
-                    onChange={(e) => setPrimaryColor(e.target.value)}
-                    className="h-10 w-10 cursor-pointer rounded border border-zinc-300 dark:border-zinc-700"
-                  />
-                  <span className="text-sm text-zinc-500 dark:text-zinc-400">{primaryColor}</span>
+                <input
+                  id="settings-team-name"
+                  type="text"
+                  value={teamName}
+                  onChange={(e) => setTeamName(e.target.value)}
+                  className={inputClasses}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="settings-team-level" className={labelClasses}>
+                  Level
+                </label>
+                <select
+                  id="settings-team-level"
+                  value={teamLevel}
+                  onChange={(e) => setTeamLevel(e.target.value)}
+                  className={inputClasses}
+                >
+                  {LEVEL_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="settings-primary-color" className={labelClasses}>
+                    Primary Color
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      id="settings-primary-color"
+                      type="color"
+                      value={primaryColor}
+                      onChange={(e) => setPrimaryColor(e.target.value)}
+                      className="h-10 w-10 cursor-pointer rounded border border-zinc-300 dark:border-zinc-700"
+                    />
+                    <span className="text-sm text-zinc-500 dark:text-zinc-400">{primaryColor}</span>
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="settings-secondary-color" className={labelClasses}>
+                    Secondary Color
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      id="settings-secondary-color"
+                      type="color"
+                      value={secondaryColor}
+                      onChange={(e) => setSecondaryColor(e.target.value)}
+                      className="h-10 w-10 cursor-pointer rounded border border-zinc-300 dark:border-zinc-700"
+                    />
+                    <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                      {secondaryColor}
+                    </span>
+                  </div>
                 </div>
               </div>
-              <div>
-                <label htmlFor="settings-secondary-color" className={labelClasses}>
-                  Secondary Color
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    id="settings-secondary-color"
-                    type="color"
-                    value={secondaryColor}
-                    onChange={(e) => setSecondaryColor(e.target.value)}
-                    className="h-10 w-10 cursor-pointer rounded border border-zinc-300 dark:border-zinc-700"
-                  />
-                  <span className="text-sm text-zinc-500 dark:text-zinc-400">
-                    {secondaryColor}
-                  </span>
-                </div>
-              </div>
-            </div>
 
-            <div className="pt-2">
-              <Button onClick={handleSaveTeam} loading={saving}>
-                Save Changes
-              </Button>
+              <div className="pt-2">
+                <Button onClick={handleSaveTeam} loading={saving}>
+                  Save Changes
+                </Button>
+              </div>
             </div>
           </div>
         </section>

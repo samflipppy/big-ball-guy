@@ -52,7 +52,7 @@ export function useStorageQuota(
     isCritical: false,
   });
 
-  const intervalRef = useRef<ReturnType<typeof setInterval>>();
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const estimate = useCallback(async () => {
     if (typeof navigator === 'undefined' || !navigator.storage?.estimate) return;

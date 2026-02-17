@@ -23,6 +23,10 @@ export interface FieldCanvasProps {
   onPanChange?: (x: number, y: number) => void;
   panMode?: boolean;
   children?: React.ReactNode;
+  onStageMouseDown?: (e: any) => void;
+  onStageMouseMove?: (e: any) => void;
+  onStageMouseUp?: (e: any) => void;
+  cursorStyle?: string;
 }
 
 // Field numbers displayed at each 10-yard interval
@@ -41,6 +45,10 @@ export function FieldCanvas({
   onPanChange,
   panMode = false,
   children,
+  onStageMouseDown,
+  onStageMouseMove,
+  onStageMouseUp,
+  cursorStyle = 'default',
 }: FieldCanvasProps) {
   const bgColor = darkMode ? CANVAS_BG_COLOR_DARK : CANVAS_BG_COLOR;
   const yardSpacing = height / yardsVisible;
@@ -273,6 +281,13 @@ export function FieldCanvas({
       draggable={panMode}
       onWheel={handleWheel}
       onDragEnd={handleDragEnd}
+      onMouseDown={onStageMouseDown}
+      onMouseMove={onStageMouseMove}
+      onMouseUp={onStageMouseUp}
+      onTouchStart={onStageMouseDown}
+      onTouchMove={onStageMouseMove}
+      onTouchEnd={onStageMouseUp}
+      style={{ cursor: cursorStyle }}
     >
       <Layer>
         {/* Background */}

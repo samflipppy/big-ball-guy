@@ -2,6 +2,11 @@
 
 import { useState, useCallback, useEffect } from 'react';
 
+// Type for screen orientation with optional lock/unlock methods
+type ScreenOrientationWithLock = ScreenOrientation & {
+  lock?: (orientation: 'landscape' | 'portrait' | 'landscape-primary' | 'landscape-secondary' | 'portrait-primary' | 'portrait-secondary' | 'natural' | 'any') => Promise<void>;
+};
+
 export interface OrientationLockInfo {
   isLocked: boolean;
   lock: () => Promise<void>;
@@ -54,8 +59,9 @@ export function useOrientationLock(): OrientationLockInfo {
     if (typeof window === 'undefined') return;
 
     try {
-      if (screen?.orientation?.lock) {
-        await screen.orientation.lock('landscape');
+      const orientation = screen?.orientation as ScreenOrientationWithLock | undefined;
+      if (orientation?.lock) {
+        await orientation.lock('landscape');
         setIsLocked(true);
       } else {
         // Fallback: just mark as locked; the UI should show a rotate overlay
@@ -72,9 +78,8 @@ export function useOrientationLock(): OrientationLockInfo {
     if (typeof window === 'undefined') return;
 
     try {
-      if (screen?.orientation?.unlock) {
-        screen.orientation.unlock();
-      }
+      // unlock is a standard method on ScreenOrientation
+      screen?.orientation?.unlock();
     } catch {
       // Ignore errors on unlock
     }

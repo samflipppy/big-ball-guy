@@ -81,6 +81,7 @@ export interface PlayerAssignment {
   route?: Route;
   blocking?: BlockingAssignment;
   motion?: MotionPath;
+  runPath?: RunPath;
   label?: string;
 }
 
@@ -88,6 +89,19 @@ export interface MotionPath {
   startPosition: Position;
   endPosition: Position;
   timing: 'pre-snap' | 'post-snap';
+}
+
+// Run path types for RB/QB runs
+export type RunGap = 'A' | 'B' | 'C' | 'D' | 'outside';
+export type RunDirection = 'left' | 'right' | 'middle';
+
+export interface RunPath {
+  id: string;
+  name: string;
+  gap?: RunGap;
+  direction: RunDirection;
+  points: RoutePoint[]; // Path the runner takes
+  handoff?: 'direct' | 'toss' | 'pitch' | 'option' | 'counter';
 }
 
 // --- Formations ---
